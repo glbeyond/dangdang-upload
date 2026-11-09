@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title data-i18n="title">dangdang 批次影像上传</title>
+<style>
+  :root { --pri:#1a73e8; --ok:#188038; --err:#d93025; --bg:#f4f6f9; --card:#fff; --line:#dfe3ea; --txt:#1f2328; --sub:#667085; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--txt);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+  header { position:relative; background:var(--pri); color:#fff; padding:14px 16px calc(14px) ; padding-top:max(14px, env(safe-area-inset-top)); padding-right:110px; }
+  .lang { position:absolute; right:12px; top:max(12px, env(safe-area-inset-top)); display:flex; border:1px solid rgba(255,255,255,.7); border-radius:18px; overflow:hidden; }
+  .lang button { border:0; background:transparent; color:#fff; font-size:14px; font-weight:600; padding:0 12px; min-height:36px; min-width:44px; }
+  .lang button.on { background:#fff; color:var(--pri); }
+  header h1 { margin:0; font-size:19px; }
+  header p { margin:2px 0 0; font-size:13px; opacity:.85; }
+  main { padding:12px 12px calc(110px + env(safe-area-inset-bottom)); max-width:640px; margin:0 auto; }
+  .card { background:var(--card); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  label.f { display:block; font-weight:600; margin:10px 0 6px; font-size:15px; }
+  label.f:first-child { margin-top:0; }
+  .req { color:var(--err); margin-left:2px; }
+  input[type=text], select, textarea { width:100%; font-size:17px; padding:12px; border:1px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--txt); -webkit-appearance:none; appearance:none; }
+  select { background-image:linear-gradient(45deg,transparent 50%,#888 50%),linear-gradient(135deg,#888 50%,transparent 50%);
+    background-position:calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size:6px 6px; background-repeat:no-repeat; }
+  textarea { min-height:64px; resize:vertical; }
+  input:focus, select:focus, textarea:focus { outline:2px solid rgba(26,115,232,.35); border-color:var(--pri); }
+  .row { display:flex; gap:8px; }
+  .row > input { flex:1; min-width:0; }
+  .chips { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .chips.two { grid-template-columns:repeat(2,1fr); }
+  #channelCustom { margin-top:8px; }
+  .scaninfo { font-size:13px; margin-top:6px; color:var(--sub); word-break:break-all; }
+  .scaninfo b { color:var(--txt); }
+  .scaninfo.warn { color:#b06000; }
+  .bcard { margin-top:10px; border-radius:12px; padding:12px; font-size:15px; }
+  .bcard.ok { background:#e6f4ea; border:1px solid #b7dfc2; }
+  .bcard.miss { background:#fef7e0; border:1px solid #f6d77a; color:#7a5300; }
+  .bcard.multi { background:#e8f0fe; border:1px solid #c3d6fb; }
+  .bcard.load { background:#f1f3f4; color:var(--sub); }
+  .bcard .g { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; }
+  .bcard .g span:nth-child(odd) { color:var(--sub); white-space:nowrap; }
+  .bcard .g span:nth-child(even) { font-weight:700; word-break:break-word; }
+  .bcard .pick { display:block; width:100%; text-align:left; margin-top:8px; padding:10px 12px; border:1px solid #c3d6fb;
+    border-radius:10px; background:#fff; font-size:15px; min-height:48px; }
+  .ver { text-align:center; font-size:11px; color:#9aa0a6; margin-top:4px; }
+  .chip { min-height:54px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:17px; font-weight:700; color:var(--txt); }
+  .chip.on { border-color:var(--pri); background:#e8f0fe; color:var(--pri); }
+  button { font:inherit; cursor:pointer; }
+  .btn { min-height:52px; padding:0 16px; border:0; border-radius:12px; font-size:17px; font-weight:600; background:#e8eaed; color:var(--txt); }
+  .btn.pri { background:var(--pri); color:#fff; }
+  .btn:disabled { opacity:.5; }
+  .media-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .media-btns .big { min-height:84px; font-size:19px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+  .media-btns .big span { font-size:26px; line-height:1; }
+  .media-btns .big b { font-weight:600; }
+  .media-btns .wide { grid-column:1 / -1; min-height:52px; }
+  .hint { color:var(--sub); font-size:13px; margin-top:6px; }
+  .list { list-style:none; margin:10px 0 0; padding:0; }
+  .item { display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--line); }
+  .item:first-child { border-top:0; }
+  .thumb { width:72px; height:72px; flex:0 0 72px; border-radius:10px; object-fit:cover; background:#000; }
+  .meta { flex:1; min-width:0; font-size:14px; }
+  .meta .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+  .meta .st { color:var(--sub); font-size:13px; margin-top:2px; }
+  .meta .st.ok { color:var(--ok); } .meta .st.err { color:var(--err); }
+  .bar { height:6px; background:#eceff3; border-radius:3px; overflow:hidden; margin-top:6px; }
+  .bar i { display:block; height:100%; width:0; background:var(--pri); transition:width .2s; }
+  .item.done .bar i { background:var(--ok); }
+  .item.fail .bar i { background:var(--err); }
+  .x { width:44px; height:44px; border:0; border-radius:22px; background:#f1f3f4; font-size:20px; color:#5f6368; flex:0 0 44px; }
+  .retry { height:40px; border:0; border-radius:10px; background:#fde7e9; color:var(--err); font-weight:700; padding:0 12px; }
+  footer { position:fixed; left:0; right:0; bottom:0; background:rgba(255,255,255,.97); border-top:1px solid var(--line);
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)); }
+  footer .in { max-width:640px; margin:0 auto; }
+  #submit { width:100%; min-height:58px; font-size:19px; }
+  #summary { font-size:14px; text-align:center; margin-bottom:6px; color:var(--sub); min-height:20px; }
+  #summary.ok { color:var(--ok); font-weight:700; } #summary.err { color:var(--err); font-weight:600; }
+  .toast { position:fixed; left:50%; top:20px; transform:translateX(-50%); background:rgba(32,33,36,.92); color:#fff;
+    padding:10px 16px; border-radius:10px; font-size:15px; z-index:50; max-width:90%; text-align:center; display:none; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-i18n="title">dangdang 批次影像上传</h1>
+  <p data-i18n="subtitle">整理好批次货物后，拍照/录像并确认上传</p>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="zh" lang="zh-CN">中文</button><button type="button" data-lang="en" lang="en">EN</button>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <label class="f" for="operator"><span data-i18n="f_operator">操作人姓名</span><span class="req">*</span></label>
+    <input type="text" id="operator" maxlength="40" placeholder="请输入你的姓名" data-i18n-ph="ph_operator" autocomplete="name">
+    <div class="hint hidden" id="opHint"></div>
+
+    <label class="f" for="cabinet"><span data-i18n="f_cabinet">柜号</span><span class="req">*</span></label>
+    <input type="text" id="cabinet" maxlength="30" placeholder="例如 8.27" data-i18n-ph="ph_cabinet" inputmode="decimal">
+
+    <label class="f"><span data-i18n="f_channel">渠道</span><span class="req">*</span></label>
+    <div class="chips" id="channels">
+      <button type="button" class="chip" data-v="UPS">UPS</button>
+      <button type="button" class="chip" data-v="BRT">BRT</button>
+      <button type="button" class="chip" data-v="RABEN">RABEN</button>
+      <button type="button" class="chip" data-v="自提" data-i18n="ch_self">自提</button>
+      <button type="button" class="chip" data-v="__custom" data-i18n="ch_custom">自定义</button>
+    </div>
+    <input type="text" id="channelCustom" class="hidden" maxlength="30" placeholder="请输入渠道名称，例如 GLS" data-i18n-ph="ph_channel">
+
+    <label class="f" for="batch"><span data-i18n="f_batch">批次号</span><span class="req">*</span></label>
+    <div class="row">
+      <input type="text" id="batch" maxlength="80" placeholder="输入或扫码" data-i18n-ph="ph_batch" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button type="button" class="btn pri" id="scanBtn">📷 <span data-i18n="scan">扫码</span></button>
+    </div>
+    <div class="scaninfo hidden" id="scanInfo"></div>
+    <div class="bcard hidden" id="batchCard"></div>
+
+    <label class="f"><span data-i18n="f_shot">拍摄类型</span><span class="req">*</span></label>
+    <div class="chips two" id="shotTypes">
+      <button type="button" class="chip" data-v="数量确认" data-i18n="st_qty">数量确认</button>
+      <button type="button" class="chip" data-v="打托完成" data-i18n="st_pallet">打托完成</button>
+      <button type="button" class="chip" data-v="出货记录" data-i18n="st_ship">出货记录</button>
+      <button type="button" class="chip" data-v="异常反馈" data-i18n="st_exc">异常反馈</button>
+    </div>
+
+    <label class="f" for="note" data-i18n="f_note">备注</label>
+    <textarea id="note" maxlength="500" placeholder="可选，例如：外箱破损 2 件" data-i18n-ph="ph_note"></textarea>
+  </section>
+
+  <section class="card">
+    <div class="media-btns">
+      <button type="button" class="btn pri big" id="btnPhoto"><span>📷</span><b data-i18n="photo">拍照</b></button>
+      <button type="button" class="btn pri big" id="btnVideo"><span>🎥</span><b data-i18n="video">录视频</b></button>
+      <button type="button" class="btn wide" id="btnPick" data-i18n="pick">从相册选择</button>
+    </div>
+    <input type="file" id="inPhoto" accept="image/*" capture="environment" multiple class="hidden">
+    <input type="file" id="inVideo" accept="video/*" capture="environment" class="hidden">
+    <input type="file" id="inPick" accept="image/*,video/*" multiple class="hidden">
+    <div class="hint" data-i18n="media_hint">照片会自动压缩（长边 2000 像素）；视频超过 300MB 会提示，建议单段控制在 1 分钟内。</div>
+    <ul class="list" id="list"></ul>
+  </section>
+</main>
+
+<footer>
+  <div class="in">
+    <div id="summary"></div>
+    <button type="button" class="btn pri" id="submit" disabled></button>
+    <div class="ver" id="ver"></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  var CHUNK = 4 * 1024 * 1024;            // 4MB，256KB 的整数倍
+  var VIDEO_WARN = 300 * 1024 * 1024;
+  var IMG_MAX_EDGE = 2000, IMG_QUALITY = 0.85, IMG_SKIP_BYTES = 1.5 * 1024 * 1024;
+  var MAX_RETRY = 3;
+  var VERSION = 'v6';
+  // 静态网页模式使用的后端地址（Apps Script 部署的 /exec 地址；更新部署时请保持同一个部署，地址不变）
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyLweDkN1nUaDtzcUh_Ax35OSPSNPUgNASfk0N7ueYT9lrpv5xzNcgCq9FVitztDleb6A/exec';
+  var DEFAULT_CHANNELS = ['UPS', 'BRT', 'RABEN', '自提'];
+  var SHOT_TYPES = ['数量确认', '打托完成', '出货记录', '异常反馈'];
+  // 条码识别引擎 zxing-wasm 3.1.6（zxing-cpp 的 WebAssembly 版），两个 CDN 互为备份；原生 BarcodeDetector 可用时优先用原生
+  var ZXING_BASES = [
+    'https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.6/',
+    'https://unpkg.com/zxing-wasm@3.1.6/'
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { channel: '', shotType: '', items: [], uploading: false, seq: 0,
+                card: null, scanInfo: null, final: null };
+
+  // ---------- 中英文切换（只改显示文字；提交和保存的值始终是中文标准值） ----------
+  var I18N = {
+    zh: {
+      title: 'dangdang 批次影像上传', subtitle: '整理好批次货物后，拍照/录像并确认上传',
+      f_operator: '操作人姓名', f_cabinet: '柜号', f_channel: '渠道', f_batch: '批次号', f_shot: '拍摄类型', f_note: '备注',
+      ph_operator: '请输入你的姓名', ph_cabinet: '例如 8.27', ph_channel: '请输入渠道名称，例如 GLS', ph_batch: '输入或扫码',
+      ph_note: '可选，例如：外箱破损 2 件',
+      ch_self: '自提', ch_custom: '自定义',
+      st_qty: '数量确认', st_pallet: '打托完成', st_ship: '出货记录', st_exc: '异常反馈',
+      scan: '扫码', photo: '拍照', video: '录视频', pick: '从相册选择', cancel: '取消', 
+      media_hint: '照片会自动压缩（长边 2000 像素）；视频超过 300MB 会提示，建议单段控制在 1 分钟内。',
+      c_cabinet: '柜号', c_channel: '渠道', c_attr: '属性', c_recipient: '收件人', c_city: '城市', c_pieces: '件数',
+      card_ok: '✔ 已匹配批次清单（柜号、渠道已自动填写，可手动修改）',
+      card_load: '正在查询批次清单…',
+      card_miss: '⚠ 未在批次清单中找到，已保留上次的柜号和渠道，请核对（可手动修改后上传）',
+      card_multi: '该批次号在多个柜中出现，请选择：',
+      card_err: '查询失败：{0}（仍可手动上传）',
+      pcs: '{0}件', paren: '（{0}）',
+      scan_raw: '扫码原值：{0} → 去掉后 4 位：{1}',
+      scan_short: '⚠ 扫码结果只有 {0} 位（{1}），未删除字符，请人工核对',
+      scan_empty: '没有识别到内容，请重试或手动输入',
+      scan_toast: '批次号：{0}',
+      scan_popup_blocked: '扫码窗口被浏览器拦截了。请在地址栏右侧允许本网站的弹出窗口，然后再点一次「扫码」。',
+      scan_popup_fail: '无法打开扫码窗口，请重试。',
+      sw_title: '扫码 - dangdang', sw_opening: '正在打开摄像头…', sw_aim: '请将条码 / 二维码对准取景框',
+      sw_switch: '切换摄像头', sw_torch: '手电筒', sw_done: '已识别，正在返回…', sw_back: '已识别。请关闭此页面，回到上传页面。',
+      sw_lib: '扫码组件加载失败，请检查网络后关闭此页面重试。', sw_retry: '重试',
+      sw_err: '无法打开摄像头。',
+      sw_e_NotAllowedError: '摄像头权限被拒绝：请点地址栏左侧的图标，把「摄像头」改为允许，然后点重试。',
+      sw_e_NotFoundError: '没有找到摄像头。',
+      sw_e_NotReadableError: '摄像头正被其他应用或网页占用，请关闭后重试。',
+      sw_e_OverconstrainedError: '没有合适的后置摄像头，请点「切换摄像头」或重试。',
+      sw_e_SecurityError: '当前浏览器不允许网页使用摄像头，请用 Chrome 或 Safari 打开。',
+      op_hint: '已自动填写上次的操作人「{0}」，换人时直接修改即可',
+      sw_engine: '识别引擎：', sw_eng_native: '原生 BarcodeDetector', sw_eng_wasm: 'ZXing-WASM', sw_eng_loading: '加载中…',
+      sw_zoom: '变焦', sw_hint: '条码横放在框内，距离约 10–20 厘米；点画面可对焦', sw_focus: '对焦',
+      sw_e_other: '请重试；如果仍然不行，请把下面的错误信息截图发给管理员。',
+      unsupported: '不支持的文件：{0}',
+      big_video: '视频「{0}」有 {1}，超过 300MB，上传会很慢。仍要添加吗？',
+      it_ready: '待上传 · {0}', it_prep: '正在处理…', it_up: '上传中 {0}% · {1}', it_done: '✔ 上传成功', it_fail: '上传失败',
+      retry: '重试', remove: '移除',
+      sum_uploading: '正在上传 {0} / {1}，请勿关闭页面', btn_uploading: '上传中…',
+      sum_none: '还没有选择照片或视频', sum_failed: '{0} 个文件上传失败，可点击重试', sum_selected: '已选择 {0} 个文件',
+      btn_retry_failed: '重试失败的文件', btn_submit: '确认上传',
+      sum_ok: '✔ 上传成功 {0} 个文件', toast_ok: '上传成功 {0} 个文件',
+      v_operator: '请填写操作人姓名', v_cabinet: '请填写柜号', v_channel: '请选择或填写渠道', v_batch: '请填写批次号',
+      v_shot: '请选择拍摄类型',
+      leave: '正在上传，离开页面会中断上传',
+      footer: 'dangdang 批次影像上传 {0}',
+      unknown: '未知错误',
+      fld_operator: '操作人姓名', fld_cabinet: '柜号', fld_channel: '渠道', fld_batch: '批次号', fld_shotType: '拍摄类型', fld_note: '备注',
+      E_REQUIRED: '{0}不能为空', E_TOO_LONG: '{0}过长（最多 {1} 个字符）', E_SHOT_TYPE: '拍摄类型不正确',
+      E_INVALID_NAMES: '柜号、渠道或批次号无效', E_BATCH_COL: '批次清单缺少「批次号」列',
+      E_FILE_SIZE: '文件大小不正确或超过 2GB', E_FILE_TYPE: '只允许上传图片或视频',
+      E_SESSION_CREATE: '创建上传会话失败（{0}）', E_SESSION_EXPIRED: '上传会话已过期，请重新上传该文件',
+      E_CHUNK_SIZE: '分块大小不正确', E_CHUNK_RANGE: '分块范围不正确', E_CHUNK_ALIGN: '分块未按 256KB 对齐',
+      E_SESSION_GONE: '上传会话已失效（{0}），请重新上传该文件', E_UPLOAD: '上传失败（{0}），可点击重试',
+      E_READ_FILE: '读取文件失败', E_UPLOAD_END: '上传未正确结束'
+    },
+    en: {
+      title: 'dangdang Batch Media Upload', subtitle: 'After sorting a batch, take photos/videos and confirm the upload',
+      f_operator: 'Operator name', f_cabinet: 'Cabinet No.', f_channel: 'Channel', f_batch: 'Batch No.', f_shot: 'Shot type', f_note: 'Note',
+      ph_operator: 'Enter your name', ph_cabinet: 'e.g. 8.27', ph_channel: 'Enter channel name, e.g. GLS', ph_batch: 'Type or scan',
+      ph_note: 'Optional, e.g. 2 outer boxes damaged',
+      ch_self: 'Self-pickup', ch_custom: 'Custom',
+      st_qty: 'Quantity check', st_pallet: 'Palletizing done', st_ship: 'Shipment record', st_exc: 'Exception report',
+      scan: 'Scan', photo: 'Photo', video: 'Video', pick: 'Choose from gallery', cancel: 'Cancel', 
+      media_hint: 'Photos are compressed automatically (long edge 2000 px). Videos over 300MB trigger a warning; keep each clip under about 1 minute.',
+      c_cabinet: 'Cabinet', c_channel: 'Channel', c_attr: 'Attribute', c_recipient: 'Recipient', c_city: 'City', c_pieces: 'Pieces',
+      card_ok: '✔ Found in batch list (cabinet and channel filled in automatically; you can still change them)',
+      card_load: 'Looking up batch list…',
+      card_miss: '⚠ Not found in the batch list; the last cabinet and channel were kept, please check (you can change them and upload)',
+      card_multi: 'This batch number appears in several cabinets, please choose:',
+      card_err: 'Lookup failed: {0} (you can still upload manually)',
+      pcs: '{0} pcs', paren: ' ({0})',
+      scan_raw: 'Scanned: {0} → last 4 removed: {1}',
+      scan_short: '⚠ Scanned value has only {0} characters ({1}); nothing was removed, please check manually',
+      scan_empty: 'Nothing recognized, please try again or type it in',
+      scan_toast: 'Batch No.: {0}',
+      scan_popup_blocked: 'The browser blocked the scanner window. Allow pop-ups for this site (icon at the right of the address bar), then tap "Scan" again.',
+      scan_popup_fail: 'Could not open the scanner window, please try again.',
+      sw_title: 'Scan - dangdang', sw_opening: 'Opening camera…', sw_aim: 'Point the barcode / QR code into the frame',
+      sw_switch: 'Switch camera', sw_torch: 'Torch', sw_done: 'Scanned, returning…', sw_back: 'Scanned. Please close this page and go back to the upload page.',
+      sw_lib: 'The scanner failed to load. Check the network, close this page and try again.', sw_retry: 'Retry',
+      sw_err: 'Cannot open the camera.',
+      sw_e_NotAllowedError: 'Camera permission was denied: tap the icon at the left of the address bar, set Camera to Allow, then tap Retry.',
+      sw_e_NotFoundError: 'No camera was found.',
+      sw_e_NotReadableError: 'The camera is in use by another app or page. Close it and retry.',
+      sw_e_OverconstrainedError: 'No suitable back camera. Tap "Switch camera" or retry.',
+      sw_e_SecurityError: 'This browser does not allow web pages to use the camera. Open the link in Chrome or Safari.',
+      op_hint: 'Filled in with the last operator "{0}"; just change it when someone else takes over',
+      sw_engine: 'Engine: ', sw_eng_native: 'native BarcodeDetector', sw_eng_wasm: 'ZXing-WASM', sw_eng_loading: 'loading…',
+      sw_zoom: 'Zoom', sw_hint: 'Hold the barcode level inside the frame, about 10–20 cm away; tap to focus', sw_focus: 'Focus',
+      sw_e_other: 'Please retry. If it still fails, send a screenshot of the error below to the admin.',
+      unsupported: 'Unsupported file: {0}',
+      big_video: 'Video "{0}" is {1}, over 300MB, and will upload slowly. Add it anyway?',
+      it_ready: 'Ready · {0}', it_prep: 'Processing…', it_up: 'Uploading {0}% · {1}', it_done: '✔ Uploaded', it_fail: 'Upload failed',
+      retry: 'Retry', remove: 'Remove',
+      sum_uploading: 'Uploading {0} / {1}, please keep this page open', btn_uploading: 'Uploading…',
+      sum_none: 'No photos or videos selected yet', sum_failed: '{0} file(s) failed, tap to retry', sum_selected: '{0} file(s) selected',
+      btn_retry_failed: 'Retry failed files', btn_submit: 'Confirm upload',
+      sum_ok: '✔ Uploaded {0} file(s)', toast_ok: 'Uploaded {0} file(s)',
+      v_operator: 'Please enter the operator name', v_cabinet: 'Please enter the cabinet number', v_channel: 'Please choose or enter a channel',
+      v_batch: 'Please enter the batch number', v_shot: 'Please choose a shot type',
+      leave: 'Upload in progress; leaving the page will interrupt it',
+      footer: 'dangdang Batch Media Upload {0}',
+      unknown: 'Unknown error',
+      fld_operator: 'Operator name', fld_cabinet: 'Cabinet No.', fld_channel: 'Channel', fld_batch: 'Batch No.', fld_shotType: 'Shot type', fld_note: 'Note',
+      E_REQUIRED: '{0} is required', E_TOO_LONG: '{0} is too long (max {1} characters)', E_SHOT_TYPE: 'Invalid shot type',
+      E_INVALID_NAMES: 'Invalid cabinet, channel or batch number', E_BATCH_COL: 'Batch list is missing the "批次号" column',
+      E_FILE_SIZE: 'Invalid file size or larger than 2GB', E_FILE_TYPE: 'Only images or videos can be uploaded',
+      E_SESSION_CREATE: 'Could not start the upload session ({0})', E_SESSION_EXPIRED: 'Upload session expired, please upload this file again',
+      E_CHUNK_SIZE: 'Invalid chunk size', E_CHUNK_RANGE: 'Invalid chunk range', E_CHUNK_ALIGN: 'Chunk not aligned to 256KB',
+      E_SESSION_GONE: 'Upload session is no longer valid ({0}), please upload this file again', E_UPLOAD: 'Upload failed ({0}), tap to retry',
+      E_READ_FILE: 'Could not read the file', E_UPLOAD_END: 'Upload did not finish correctly'
+    }
+  };
+  var LANG_KEY = 'dd_lang';
+  var lang = (function () {
+    var saved = ''; try { saved = localStorage.getItem(LANG_KEY) || ''; } catch (e) {}
+    if (saved === 'zh' || saved === 'en') return saved;
+    var nav = String((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+    return /^en/.test(nav) ? 'en' : 'zh';
+  })();
+  function t(key) {
+    var d = I18N[lang] || I18N.zh, s = d[key] != null ? d[key] : (I18N.zh[key] != null ? I18N.zh[key] : key);
+    var args = Array.prototype.slice.call(arguments, 1);
+    return String(s).replace(/\{(\d)\}/g, function (m, i) { return args[i] != null ? args[i] : ''; });
+  }
+  // 中文标准值 → 显示文字
+  var CH_LABEL = { '自提': 'ch_self' };
+  var ST_LABEL = { '数量确认': 'st_qty', '打托完成': 'st_pallet', '出货记录': 'st_ship', '异常反馈': 'st_exc' };
+  function chLabel(v) { return CH_LABEL[v] ? t(CH_LABEL[v]) : v; }
+
+  // 错误：服务器返回 "[E_CODE|参数…] 中文信息"，前端按当前语言显示；无代码时显示原文
+  function parseErr(e) {
+    var m = String((e && e.message) || e || '').replace(/^Exception:\s*/, '');
+    var r = /\[(E_[A-Z_]+)((?:\|[^|\]]*)*)\]\s*([\s\S]*)/.exec(m);
+    return r ? { code: r[1], args: r[2] ? r[2].slice(1).split('|') : [], raw: r[3] } : { code: null, args: [], raw: m };
+  }
+  function errText(o) {
+    if (!o) return t('unknown');
+    if (o.code && I18N.zh[o.code]) {
+      var a = o.args.slice();
+      if ((o.code === 'E_REQUIRED' || o.code === 'E_TOO_LONG') && I18N.zh['fld_' + a[0]]) a[0] = t('fld_' + a[0]);
+      return t.apply(null, [o.code].concat(a));
+    }
+    return o.raw || t('unknown');
+  }
+  function errMsg(e) { return errText(parseErr(e)); }
+  function isExpired(o) { return !!o && (o.code === 'E_SESSION_EXPIRED' || o.code === 'E_SESSION_GONE' || /过期|失效/.test(o.raw || '')); }
+  function codedError(code) { return new Error('[' + code + '] ' + I18N.zh[code]); }
+
+  // ---------- google.script.run 的 Promise 封装 ----------
+  // 两种运行方式：① 在 Apps Script 里打开（有 google.script.run）；② 作为静态网页放在其他网站（如 GitHub Pages），
+  // 这时用 fetch 调用 Apps Script 的 doPost 接口，且不带 Google 登录 Cookie（credentials:'omit'），
+  // 所以浏览器里登录了几个 Google 账号都不会出现「抱歉，目前无法打开该文件」。
+  var HAS_GSR = !!(window.google && google.script && google.script.run);
+  function callFetch(fn, args) {
+    return fetch(API_URL, {
+      method: 'POST', credentials: 'omit', redirect: 'follow', cache: 'no-store',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },     // text/plain 不触发 CORS 预检
+      body: JSON.stringify({ fn: fn, args: args })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (!j || !j.ok) throw new Error((j && j.error) || 'bad response');
+      return j.result;
+    });
+  }
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (!HAS_GSR) return callFetch(fn, args);
+    return new Promise(function (resolve, reject) {
+      var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) {
+        reject(e instanceof Error ? e : new Error((e && e.message) || String(e)));
+      });
+      r[fn].apply(r, args);
+    });
+  }
+
+  // toast(键, 参数…)：保存键和参数，切换语言时正在显示的提示也会翻译
+  function toast(key) {
+    var args = Array.prototype.slice.call(arguments, 1), el = $('toast');
+    toast._spec = [key].concat(args);
+    el.textContent = t.apply(null, toast._spec); el.style.display = 'block';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.style.display = 'none'; toast._spec = null; }, key === 'toast_ok' || key === 'scan_toast' ? 3500 : 2600);
+  }
+  function fmtMB(b) { return (b / 1048576).toFixed(b < 10485760 ? 2 : 1) + 'MB'; }
+
+  // ---------- 记住姓名和柜号 ----------
+  function store(k, v) { try { localStorage.setItem('dd_' + k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem('dd_' + k) || ''; } catch (e) { return ''; } }
+  // 操作人：填写一次后一直记住，直到有人手动修改（换人时改一下即可）
+  // 柜号：扫码查询到批次时自动填写；查不到时保留上一次的柜号
+  // 渠道：查询到批次时自动选择；查不到时保留上一次的渠道
+  var cabinetEditedAt = 0;
+  $('operator').value = load('operator');
+  $('cabinet').value = load('cabinet');
+  function renderOpHint() {
+    var v = $('operator').value.trim(), h = $('opHint');
+    var show = !!v && v === load('operator') && state.opPrefilled;
+    h.className = show ? 'hint' : 'hint hidden';
+    h.textContent = show ? t('op_hint', v) : '';
+  }
+  state.opPrefilled = !!$('operator').value;
+  $('operator').addEventListener('input', function () { store('operator', this.value.trim()); state.opPrefilled = false; renderOpHint(); });
+  $('cabinet').addEventListener('input', function () { cabinetEditedAt = Date.now(); store('cabinet', this.value.trim()); });
+
+  // ---------- 渠道按钮（含自定义） ----------
+  function chipsOf(id) { return Array.prototype.slice.call(document.querySelectorAll('#' + id + ' .chip')); }
+  function markChip(id, v) { chipsOf(id).forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-v') === v); }); }
+  function setChannel(v) {
+    v = String(v || '').trim();
+    if (!v) return;
+    if (DEFAULT_CHANNELS.indexOf(v) >= 0) {
+      state.channel = v; markChip('channels', v); $('channelCustom').classList.add('hidden');
+    } else {
+      state.channel = '__custom'; markChip('channels', '__custom');
+      $('channelCustom').classList.remove('hidden'); $('channelCustom').value = v.slice(0, 30);
+    }
+  }
+  $('channelCustom').addEventListener('input', function () { store('channel', this.value.trim()); });
+  if (load('channel')) setChannel(load('channel'));
+  function currentChannel() {
+    return state.channel === '__custom' ? $('channelCustom').value.trim() : state.channel;
+  }
+  chipsOf('channels').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-v');
+      state.channel = v; markChip('channels', v);
+      $('channelCustom').classList.toggle('hidden', v !== '__custom');
+      if (v === '__custom') $('channelCustom').focus(); else store('channel', v);
+    });
+  });
+
+  // ---------- 拍摄类型按钮 ----------
+  chipsOf('shotTypes').forEach(function (b) {
+    b.addEventListener('click', function () { state.shotType = b.getAttribute('data-v'); markChip('shotTypes', state.shotType); });
+  });
+
+  // ---------- 批次号查询（和 dangdang 批次清单联动） ----------
+  var lookupSeq = 0, lookupTimer = null, lastLooked = '';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  // 卡片内容保存在 state.card，切换语言时重新渲染
+  function setCard(c) { state.card = c; renderCard(); }
+  function hideCard() { setCard(null); }
+  function infoGrid(r) {
+    return '<div class="g">' +
+      '<span>' + esc(t('c_cabinet')) + '</span><span>' + esc(r.cabinet ? r.cabinet + '柜' : '-') + '</span>' +
+      '<span>' + esc(t('c_channel')) + '</span><span>' + esc(r.channel ? chLabel(r.channel) : '-') + '</span>' +
+      '<span>' + esc(t('c_attr')) + '</span><span>' + esc(r.attribute || '-') + '</span>' +
+      '<span>' + esc(t('c_recipient')) + '</span><span>' + esc(r.recipient || '-') + '</span>' +
+      '<span>' + esc(t('c_city')) + '</span><span>' + esc(r.city || '-') + '</span>' +
+      '<span>' + esc(t('c_pieces')) + '</span><span>' + esc(r.pieces || '-') + '</span></div>';
+  }
+  function renderCard() {
+    var el = $('batchCard'), c = state.card;
+    if (!c) { el.className = 'bcard hidden'; el.innerHTML = ''; return; }
+    if (c.type === 'ok') {
+      el.className = 'bcard ok';
+      el.innerHTML = '<div style="margin-bottom:6px;font-weight:700">' + esc(t('card_ok')) + '</div>' + infoGrid(c.match);
+    } else if (c.type === 'load') {
+      el.className = 'bcard load'; el.textContent = t('card_load');
+    } else if (c.type === 'miss') {
+      el.className = 'bcard miss'; el.textContent = t('card_miss');
+    } else if (c.type === 'err') {
+      el.className = 'bcard miss'; el.textContent = t('card_err', errText(c.err));
+    } else if (c.type === 'multi') {
+      el.className = 'bcard multi';
+      el.innerHTML = '<div style="font-weight:700">' + esc(t('card_multi')) + '</div>' +
+        c.matches.map(function (r, i) {
+          return '<button type="button" class="pick" data-i="' + i + '">' + esc((r.cabinet || '?') + '柜 · ' + chLabel(r.channel) +
+            (r.attribute && r.attribute !== r.channel ? t('paren', r.attribute) : '') + ' · ' + r.recipient + ' · ' + r.city +
+            ' · ' + t('pcs', r.pieces)) + '</button>';
+        }).join('');
+      Array.prototype.forEach.call(el.querySelectorAll('.pick'), function (btn) {
+        btn.addEventListener('click', function () { applyMatch(c.matches[Number(btn.getAttribute('data-i'))]); });
+      });
+    }
+  }
+  // fromLookup=true：自动查询结果；若查询开始后用户手动改过柜号，就不覆盖
+  function applyMatch(r, fromLookup, startedAt) {
+    if (r.cabinet && !(fromLookup && cabinetEditedAt > startedAt)) { $('cabinet').value = r.cabinet; store('cabinet', r.cabinet); }
+    if (r.channel) { setChannel(r.channel); store('channel', r.channel); }
+    setCard({ type: 'ok', match: r });
+  }
+  function lookupNow(force) {
+    clearTimeout(lookupTimer);
+    var b = $('batch').value.trim();
+    if (!b) { lastLooked = ''; hideCard(); return; }
+    if (!force && b.toUpperCase() === lastLooked) return;
+    lastLooked = b.toUpperCase();
+    var my = ++lookupSeq, startedAt = Date.now();
+    setCard({ type: 'load' });
+    call('lookupBatch', b).then(function (res) {
+      if (my !== lookupSeq) return;                       // 输入已变化，忽略旧结果
+      var ms = (res && res.matches) || [];
+      if (!ms.length) {
+        if (!$('cabinet').value.trim() && load('cabinet')) $('cabinet').value = load('cabinet');   // 查不到时保留上次的柜号
+        setCard({ type: 'miss' }); return;
+      }
+      if (ms.length === 1) { applyMatch(ms[0], true, startedAt); return; }
+      setCard({ type: 'multi', matches: ms });
+    }).catch(function (e) {
+      if (my !== lookupSeq) return;
+      lastLooked = '';
+      setCard({ type: 'err', err: parseErr(e) });
+    });
+  }
+  $('batch').addEventListener('input', function () {
+    state.scanInfo = null; renderScanInfo();
+    clearTimeout(lookupTimer); lookupTimer = setTimeout(lookupNow, 700);
+  });
+  $('batch').addEventListener('blur', function () { lookupNow(false); });
+  $('batch').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+
+  // ---------- 扫码（v4）：在顶层新窗口里实时扫码 ----------
+  // Apps Script 把网页放在 googleusercontent.com 的沙箱 iframe 里，外层 iframe 的 allow 列表没有 camera，
+  // Chrome / Safari 都会拒绝 getUserMedia（表现为黑屏或权限错误），网页代码无法改变这一点。
+  // 解决：点击「扫码」时用 window.open 打开一个空白顶层窗口，写入扫码页（同源，不在 iframe 里，可用摄像头），
+  // 识别后通过 postMessage 把原值传回本页，再自动关闭窗口。扫描结果自动去掉最后 4 个字符。
+  var scanWin = null, scanNonce = '';
+  function useScanned(raw) {
+    raw = String(raw || '').trim();
+    if (!raw) { toast('scan_empty'); return; }
+    var val = raw.length > 4 ? raw.slice(0, -4) : raw;
+    state.scanInfo = { raw: raw, val: val, short: raw.length <= 4 };
+    renderScanInfo();
+    $('batch').value = val.slice(0, 80);
+    toast('scan_toast', val);
+    lookupNow(true);
+  }
+
+  function renderScanInfo() {
+    var info = $('scanInfo'), si = state.scanInfo;
+    if (!si) { info.className = 'scaninfo hidden'; info.innerHTML = ''; return; }
+    var b = function (x) { return '<b>' + esc(x) + '</b>'; };
+    if (si.short) { info.className = 'scaninfo warn'; info.innerHTML = esc(t('scan_short', '\u0001', '\u0002')).replace('\u0001', String(si.raw.length)).replace('\u0002', b(si.raw)); }
+    else { info.className = 'scaninfo'; info.innerHTML = esc(t('scan_raw', '\u0001', '\u0002')).replace('\u0001', b(si.raw)).replace('\u0002', b(si.val)); }
+  }
+
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.type !== 'dd-scan' || !scanNonce || d.nonce !== scanNonce) return;
+    if (scanWin && e.source && e.source !== scanWin) return;
+    scanNonce = ''; scanWin = null;
+    try { window.focus(); } catch (x) {}
+    useScanned(d.value);
+  });
+
+  function scannerPageHtml(nonce) {
+    var keys = ['sw_title', 'sw_opening', 'sw_aim', 'sw_switch', 'sw_torch', 'cancel', 'sw_done', 'sw_lib',
+                'sw_err', 'sw_e_NotAllowedError', 'sw_e_NotFoundError', 'sw_e_NotReadableError',
+                'sw_e_OverconstrainedError', 'sw_e_SecurityError', 'sw_e_other', 'sw_retry', 'sw_back',
+                'sw_engine', 'sw_eng_native', 'sw_eng_wasm', 'sw_eng_loading', 'sw_zoom', 'sw_hint', 'sw_focus'];
+    var L = {};
+    keys.forEach(function (k) { L[k] = t(k); });
+    var force = '';
+    try { force = localStorage.getItem('dd_scan_engine') || ''; } catch (e) {}
+    var cfg = { nonce: nonce, zx: ZXING_BASES, L: L, force: force };
+    // 写入新窗口的 JSON 需要转义 "<"，防止提前结束 script 标签
+    var cfgJson = JSON.stringify(cfg).replace(/</g, '\\u003c');
+    return '<!DOCTYPE html><html lang="' + (lang === 'en' ? 'en' : 'zh-CN') + '"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">' +
+      '<title>' + esc(L.sw_title) + '</title><style>' +
+      '*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}' +
+      '#wrap{position:fixed;inset:0;display:flex;flex-direction:column}' +
+      '#top{padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));text-align:center;font-size:15px;line-height:1.5;min-height:44px}' +
+      '#stage{flex:1;position:relative;overflow:hidden;min-height:200px;touch-action:none}' +
+      '#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}' +
+      '#box{position:absolute;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none;transition:border-color .15s}' +
+      '#box.ok{border-color:#34a853}#box i{position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(234,67,53,.85)}' +
+      '#hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:13px;color:#ddd;pointer-events:none;padding:0 12px}' +
+      '#ring{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid #fbbc04;border-radius:50%;display:none;pointer-events:none}' +
+      '#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:16px;line-height:1.6;background:#000;z-index:5}' +
+      '#msg small{display:block;color:#aaa;font-size:13px;margin-top:8px;word-break:break-all}' +
+      '#zoomRow{display:flex;align-items:center;gap:10px;padding:6px 16px 0}#zoomRow[hidden]{display:none}#zoomRow input{flex:1}#zv{min-width:44px;text-align:right;font-size:14px}' +
+      '#eng{font-size:11px;color:#9aa0a6;text-align:center;padding:4px 8px 0;min-height:18px;word-break:break-all}' +
+      '#bot{display:flex;gap:10px;padding:10px 14px 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}' +
+      '#bot button{flex:1;font-size:16px;padding:14px 8px;border-radius:10px;border:0;background:#3c4043;color:#fff}' +
+      '#bot button.pri{background:#1a73e8}#bot button.on{background:#f9ab00;color:#000}#bot button[hidden]{display:none}' +
+      '</style></head><body><div id="wrap"><div id="top"></div>' +
+      '<div id="stage"><video id="vid" playsinline muted autoplay></video><div id="box"><i></i></div><div id="ring"></div><div id="hint"></div><div id="msg"></div></div>' +
+      '<div id="zoomRow" hidden><span id="zl"></span><input id="zoom" type="range"><span id="zv"></span></div>' +
+      '<div id="eng"></div>' +
+      '<div id="bot"><button id="bCancel"></button><button id="bTorch" hidden></button><button id="bSwitch" class="pri" hidden></button></div></div>' +
+      '<script>window.__DD_CFG=' + cfgJson + ';<\/script>' +
+      '<script>(' + scannerMain.toString() + ')();<\/script></body></html>';
+  }
+
+  // 这个函数会被转成字符串写进扫码窗口运行（不要引用外部变量）
+  // 识别引擎：① 浏览器原生 BarcodeDetector（安卓 Chrome，基于 ML Kit，最快）；② zxing-cpp WebAssembly（iPhone / 电脑 / 原生不可用时）
+  function scannerMain() {
+    var C = window.__DD_CFG, L = C.L;
+    var $ = function (id) { return document.getElementById(id); };
+    var NATIVE_FMTS = ['code_128', 'code_39', 'code_93', 'codabar', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'qr_code', 'data_matrix'];
+    var ZX_FMTS = ['Code128', 'Code39', 'Code93', 'Codabar', 'EAN13', 'EAN8', 'UPCA', 'UPCE', 'ITF', 'QRCode', 'DataMatrix'];
+    var MATRIX = /qr|matrix|aztec|pdf/i;
+    var stream = null, track = null, cams = [], camId = '', done = false, running = false, loopTimer = 0, gen = 0;
+    var native = null, nativeFmts = [], zx = null, zxBase = '', engine = '', frameNo = 0, fpsT = 0, fpsN = 0, fps = 0;
+    var last = { text: '', at: 0 }, torchOn = false, audioCtx = null;
+    var vid = $('vid'), cvs = document.createElement('canvas'), ctx = cvs.getContext('2d', { willReadFrequently: true });
+
+    $('bCancel').textContent = L.cancel; $('bSwitch').textContent = L.sw_switch; $('bTorch').textContent = L.sw_torch;
+    $('zl').textContent = L.sw_zoom; $('hint').textContent = L.sw_hint;
+    function top(s) { $('top').textContent = s; }
+    function msg(html) { var m = $('msg'); if (!html) { m.style.display = 'none'; m.innerHTML = ''; return; } m.innerHTML = html; m.style.display = 'flex'; }
+    function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    // ---------- 识别引擎加载 ----------
+    function initNative() {
+      if (!('BarcodeDetector' in window) || C.force === 'wasm') return Promise.resolve(false);
+      return Promise.resolve(window.BarcodeDetector.getSupportedFormats ? window.BarcodeDetector.getSupportedFormats() : [])
+        .then(function (sup) {
+          nativeFmts = NATIVE_FMTS.filter(function (f) { return sup.indexOf(f) >= 0; });
+          if (nativeFmts.indexOf('code_128') < 0) return false;          // 不支持 Code128 的原生实现不用
+          native = new window.BarcodeDetector({ formats: nativeFmts });
+          return true;
+        }).catch(function () { return false; });
+    }
+    function loadScript(url) {
+      return new Promise(function (res, rej) {
+        var s = document.createElement('script'); s.src = url; s.async = true;
+        s.onload = function () { window.ZXingWASM ? res() : rej(new Error('lib')); };
+        s.onerror = function () { s.remove(); rej(new Error('lib')); };
+        document.head.appendChild(s);
+      });
+    }
+    function initZx() {
+      if (zx) return Promise.resolve(true);
+      if (C.force === 'native') return Promise.resolve(false);
+      return C.zx.reduce(function (p, base) {
+        return p.catch(function () {
+          return (window.ZXingWASM ? Promise.resolve() : loadScript(base + 'dist/iife/reader/index.js')).then(function () {
+            var Z = window.ZXingWASM;
+            return Promise.resolve(Z.prepareZXingModule({
+              overrides: { locateFile: function (path, prefix) { return /\.wasm$/.test(path) ? base + 'dist/reader/' + path : prefix + path; } },
+              fireImmediately: true
+            })).then(function () { zx = Z; zxBase = base; return true; });
+          });
+        });
+      }, Promise.reject(new Error('start'))).catch(function () { return false; });
+    }
+    function engineLabel() {
+      var s = track && track.getSettings ? track.getSettings() : {};
+      var name = engine === 'native' ? L.sw_eng_native : engine === 'wasm' ? L.sw_eng_wasm : L.sw_eng_loading;
+      $('eng').textContent = L.sw_engine + name + (s.width ? ' · ' + s.width + '×' + s.height : '') + (fps ? ' · ' + fps + 'fps' : '') +
+        (track && track.label ? ' · ' + track.label : '');
+    }
+
+    // ---------- 摄像头 ----------
+    function errName(e) {
+      if (!e) return 'Error';
+      if (e.name && e.name !== 'Error') return e.name;
+      var m = String(e.message || e).match(/(NotAllowedError|NotFoundError|NotReadableError|OverconstrainedError|SecurityError|AbortError)/);
+      return m ? m[1] : 'Error';
+    }
+    function showErr(e) {
+      var n = errName(e), hint = L['sw_e_' + n] || L.sw_e_other;
+      top('');
+      msg('<div>' + escH(L.sw_err) + '<br>' + escH(hint) + '<small>' + escH(n + ': ' + String((e && e.message) || e || '')) + '</small>' +
+          '<div style="margin-top:16px"><button id="bRetry" style="font-size:16px;padding:12px 24px;border-radius:10px;border:0;background:#1a73e8;color:#fff">' + escH(L.sw_retry) + '</button></div></div>');
+      $('bRetry').onclick = function () { msg(''); startCam(camId); };
+    }
+    function stopCam() {
+      gen++; running = false; clearTimeout(loopTimer);
+      if (stream) stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      stream = null; track = null;
+    }
+    // 安卓多摄手机上 facingMode 可能选到超广角（不能对焦），优先主摄 "camera2 0" / 带 back 且非 wide/tele 的镜头
+    function pickBack(list) {
+      var back = list.filter(function (d) { return /back|rear|environment|后|背/i.test(d.label || ''); });
+      if (!back.length) return '';
+      var main = back.filter(function (d) { return /camera2? 0\b|camera 0\b/i.test(d.label); })[0] ||
+                 back.filter(function (d) { return !/wide|ultra|tele|超广|广角|长焦|depth|macro|微距/i.test(d.label); })[0] || back[0];
+      return main.deviceId;
+    }
+    function listCams() {
+      return navigator.mediaDevices.enumerateDevices().then(function (ds) {
+        cams = ds.filter(function (d) { return d.kind === 'videoinput'; });
+        $('bSwitch').hidden = cams.length < 2;
+      }).catch(function () {});
+    }
+    function open(deviceId) {
+      var v = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
+      if (deviceId) v.deviceId = { exact: deviceId }; else v.facingMode = { ideal: 'environment' };
+      return navigator.mediaDevices.getUserMedia({ video: v, audio: false });
+    }
+    function startCam(deviceId) {
+      stopCam(); msg(''); top(L.sw_opening);
+      var myGen = gen, saved = '';
+      try { saved = localStorage.getItem('dd_scan_cam') || ''; } catch (e) {}
+      var want = deviceId || saved || '';
+      return open(want).catch(function (e) {
+        if (!want || errName(e) === 'NotAllowedError') throw e;
+        return open('');                                   // 记住的摄像头不可用时，回到默认后置
+      }).then(function (s) {
+        if (myGen !== gen) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        stream = s; track = s.getVideoTracks()[0];
+        var cur = track.getSettings ? track.getSettings().deviceId : '';
+        // 第一次（未指定、未记住）时，若默认选到的不是主摄，换到主摄
+        return listCams().then(function () {
+          if (deviceId || saved) return;
+          var best = pickBack(cams);
+          if (best && cur && best !== cur) {
+            s.getTracks().forEach(function (t) { t.stop(); });
+            return open(best).then(function (s2) { stream = s2; track = s2.getVideoTracks()[0]; }, function () {
+              return open('').then(function (s3) { stream = s3; track = s3.getVideoTracks()[0]; });
+            });
+          }
+        });
+      }).then(function () {
+        if (!stream || myGen !== gen) return;
+        camId = (track.getSettings && track.getSettings().deviceId) || '';
+        vid.srcObject = stream; vid.muted = true; vid.setAttribute('playsinline', '');
+        return vid.play().catch(function () {}).then(function () {
+          return new Promise(function (r) { if (vid.videoWidth) r(); else vid.onloadedmetadata = function () { r(); }; setTimeout(r, 1500); });
+        });
+      }).then(function () {
+        if (!stream || myGen !== gen) return;
+        tuneTrack(); layoutBox(); top(L.sw_aim); engineLabel();
+        running = true; loop(myGen);
+      }).catch(function (e) { if (myGen === gen) showErr(e); });
+    }
+    function caps() { try { return track && track.getCapabilities ? track.getCapabilities() : {}; } catch (e) { return {}; } }
+    function apply(c) { try { return track.applyConstraints({ advanced: [c] }).catch(function () {}); } catch (e) { return Promise.resolve(); } }
+    function tuneTrack() {
+      var c = caps();
+      if (c.focusMode && c.focusMode.indexOf('continuous') >= 0) apply({ focusMode: 'continuous' });
+      if (c.exposureMode && c.exposureMode.indexOf('continuous') >= 0) apply({ exposureMode: 'continuous' });
+      if (c.whiteBalanceMode && c.whiteBalanceMode.indexOf('continuous') >= 0) apply({ whiteBalanceMode: 'continuous' });
+      // 变焦：默认放大到 1.5 倍左右（条码离得稍远也能看清），可用滑杆调整
+      var zr = $('zoomRow'), z = $('zoom');
+      if (c.zoom && c.zoom.max > c.zoom.min) {
+        var max = Math.min(c.zoom.max, 8), step = c.zoom.step || 0.1;
+        z.min = c.zoom.min; z.max = max; z.step = step;
+        var def = Math.max(c.zoom.min, Math.min(max, 1.5));
+        z.value = def; $('zv').textContent = (+def).toFixed(1) + '×'; zr.hidden = false;
+        apply({ zoom: def });
+        z.oninput = function () { $('zv').textContent = (+z.value).toFixed(1) + '×'; apply({ zoom: +z.value }); };
+      } else zr.hidden = true;
+      var b = $('bTorch'); torchOn = false; b.classList.remove('on');
+      b.hidden = !c.torch;
+      b.onclick = function () { torchOn = !torchOn; b.classList.toggle('on', torchOn); apply({ torch: torchOn }); };
+    }
+    // 点画面对焦（支持时）
+    $('stage').addEventListener('click', function (ev) {
+      unlockAudio();
+      if (!track) return;
+      var c = caps(), r = $('stage').getBoundingClientRect(), ring = $('ring');
+      ring.style.left = (ev.clientX - r.left) + 'px'; ring.style.top = (ev.clientY - r.top) + 'px'; ring.style.display = 'block';
+      setTimeout(function () { ring.style.display = 'none'; }, 700);
+      var p = mapToVideo((ev.clientX - r.left), (ev.clientY - r.top));
+      var adv = {};
+      if (c.pointsOfInterest || ('pointsOfInterest' in (track.getSettings ? track.getSettings() : {}))) adv.pointsOfInterest = [{ x: p.x / (vid.videoWidth || 1), y: p.y / (vid.videoHeight || 1) }];
+      if (c.focusMode && c.focusMode.indexOf('single-shot') >= 0) adv.focusMode = 'single-shot';
+      else if (c.focusMode && c.focusMode.indexOf('manual') < 0 && c.focusMode.indexOf('continuous') >= 0) adv.focusMode = 'continuous';
+      if (Object.keys(adv).length) apply(adv).then(function () {
+        if (adv.focusMode === 'single-shot') setTimeout(function () { apply({ focusMode: 'continuous' }); }, 1500);
+      });
+    });
+
+    // ---------- 取景框与坐标换算（video 使用 object-fit:cover） ----------
+    var boxCss = { x: 0, y: 0, w: 0, h: 0 };
+    function layoutBox() {
+      var st = $('stage'), W = st.clientWidth, H = st.clientHeight;
+      var w = Math.round(W * 0.88), h = Math.round(Math.min(H * 0.42, w * 0.62));
+      h = Math.max(h, 110);
+      boxCss = { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h };
+      var b = $('box'); b.style.left = boxCss.x + 'px'; b.style.top = boxCss.y + 'px'; b.style.width = w + 'px'; b.style.height = h + 'px';
+    }
+    window.addEventListener('resize', layoutBox);
+    function coverMap() {
+      var st = $('stage'), W = st.clientWidth, H = st.clientHeight, vw = vid.videoWidth, vh = vid.videoHeight;
+      var s = Math.max(W / vw, H / vh);
+      return { s: s, ox: (W - vw * s) / 2, oy: (H - vh * s) / 2, vw: vw, vh: vh };
+    }
+    function mapToVideo(x, y) { var m = coverMap(); return { x: (x - m.ox) / m.s, y: (y - m.oy) / m.s }; }
+    // 取景框对应的视频区域（四周多留 12%），裁剪后识别更快更准
+    function cropRect() {
+      var m = coverMap(), padX = boxCss.w * 0.12, padY = boxCss.h * 0.25;
+      var x = (boxCss.x - padX - m.ox) / m.s, y = (boxCss.y - padY - m.oy) / m.s;
+      var w = (boxCss.w + padX * 2) / m.s, h = (boxCss.h + padY * 2) / m.s;
+      x = Math.max(0, x); y = Math.max(0, y); w = Math.min(m.vw - x, w); h = Math.min(m.vh - y, h);
+      return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
+    }
+    function grab(rect, maxW) {
+      var sc = Math.min(1, maxW / rect.w);
+      var w = Math.max(1, Math.round(rect.w * sc)), h = Math.max(1, Math.round(rect.h * sc));
+      if (cvs.width !== w) cvs.width = w; if (cvs.height !== h) cvs.height = h;
+      ctx.drawImage(vid, rect.x, rect.y, rect.w, rect.h, 0, 0, w, h);
+      return cvs;
+    }
+
+    // ---------- 识别循环（约 12~15 帧/秒；每 4 帧扫一次全画面） ----------
+    var zxOpts = { formats: ZX_FMTS, tryHarder: true, tryRotate: true, tryInvert: false, tryDownscale: true, maxNumberOfSymbols: 1 };
+    function decodeNative(full) {
+      var src = full ? vid : grab(cropRect(), 1600);
+      return native.detect(src).then(function (rs) {
+        for (var i = 0; i < rs.length; i++) if (rs[i].rawValue) return { text: rs[i].rawValue, fmt: rs[i].format };
+        return null;
+      });
+    }
+    function decodeZx(full) {
+      var c = full ? grab({ x: 0, y: 0, w: vid.videoWidth, h: vid.videoHeight }, 1280) : grab(cropRect(), 1280);
+      var img = ctx.getImageData(0, 0, c.width, c.height);
+      return zx.readBarcodes(img, zxOpts).then(function (rs) {
+        for (var i = 0; i < rs.length; i++) if (rs[i].isValid !== false && rs[i].text) return { text: rs[i].text, fmt: rs[i].format };
+        return null;
+      });
+    }
+    function loop(myGen) {
+      if (!running || myGen !== gen || done) return;
+      var t0 = performance.now();
+      if (!vid.videoWidth || vid.readyState < 2) { loopTimer = setTimeout(function () { loop(myGen); }, 80); return; }
+      frameNo++;
+      var full = frameNo % 4 === 0, p;
+      if (engine === 'native') p = decodeNative(full).then(function (r) {
+        // 原生没读到时，每 3 帧用 zxing 补一次（若已加载）
+        if (!r && zx && frameNo % 3 === 0) return decodeZx(full);
+        return r;
+      });
+      else if (engine === 'wasm') p = decodeZx(full);
+      else p = Promise.resolve(null);
+      p.catch(function () { return null; }).then(function (r) {
+        if (myGen !== gen) return;
+        fpsN++; var now = performance.now();
+        if (now - fpsT > 1000) { fps = Math.round(fpsN * 1000 / (now - fpsT)); fpsN = 0; fpsT = now; engineLabel(); }
+        if (r && r.text) hit(String(r.text).trim(), String(r.fmt || ''));
+        var wait = Math.max(0, 70 - (performance.now() - t0));
+        loopTimer = setTimeout(function () { loop(myGen); }, wait);
+      });
+    }
+    // 防误读：一维码需要连续两次读到相同内容（1.5 秒内）；二维码自带纠错，一次即可
+    function hit(text, fmt) {
+      if (!text || done) return;
+      var now = Date.now();
+      if (MATRIX.test(fmt) || (last.text === text && now - last.at < 1500)) return success(text);
+      last = { text: text, at: now };
+      $('box').classList.add('ok'); setTimeout(function () { if (!done) $('box').classList.remove('ok'); }, 250);
+    }
+    function unlockAudio() {
+      try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+    }
+    function beep() {
+      try {
+        unlockAudio(); if (!audioCtx) return;
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 1800; g.gain.value = 0.15;
+        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
+    }
+    function success(text) {
+      done = true; running = false;
+      $('box').classList.add('ok');
+      try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+      beep();
+      top('✔ ' + text);
+      try { if (camId) localStorage.setItem('dd_scan_cam', camId); } catch (e) {}
+      var sent = false;
+      try { if (window.opener && !window.opener.closed) { window.opener.postMessage({ type: 'dd-scan', nonce: C.nonce, value: String(text) }, '*'); sent = true; } } catch (e) {}
+      setTimeout(function () {
+        stopCam();
+        if (sent) { try { window.opener.focus(); } catch (e) {} window.close(); }
+        setTimeout(function () { msg('<div>✔ ' + escH(text) + '<br>' + escH(sent ? L.sw_done : L.sw_back) + '</div>'); }, 300);
+      }, 250);
+    }
+
+    // ---------- 按钮 ----------
+    $('bCancel').onclick = function () { done = true; stopCam(); window.close(); };
+    $('bSwitch').onclick = function () {
+      unlockAudio();
+      if (cams.length < 2) return;
+      var i = -1;
+      for (var k = 0; k < cams.length; k++) if (cams[k].deviceId === camId) i = k;
+      var next = cams[(i + 1) % cams.length].deviceId;
+      try { localStorage.setItem('dd_scan_cam', next); } catch (e) {}
+      startCam(next);
+    };
+    // 点引擎文字可在两个引擎间切换（排查问题用）
+    $('eng').addEventListener('click', function () {
+      if (engine === 'native' && zx) engine = 'wasm';
+      else if (engine === 'wasm' && native) engine = 'native';
+      engineLabel();
+    });
+    window.addEventListener('pagehide', stopCam);
+    document.addEventListener('visibilitychange', function () { if (document.hidden && !done) stopCam(); else if (!document.hidden && !done && !stream) startCam(camId); });
+
+    top(L.sw_opening); engineLabel();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showErr({ name: 'SecurityError', message: 'navigator.mediaDevices unavailable' });
+      return;
+    }
+    // 摄像头和识别引擎并行准备；原生优先，WASM 在后台加载作补充/备用
+    var zxP = initZx();
+    initNative().then(function (ok) {
+      if (ok) { engine = 'native'; engineLabel(); return; }
+      return zxP.then(function (ok2) {
+        if (ok2) { engine = 'wasm'; engineLabel(); }
+        else { stopCam(); top(''); msg('<div>' + escH(L.sw_lib) + '</div>'); }
+      });
+    });
+    startCam('');
+  }
+
+  $('scanBtn').addEventListener('click', function () {
+    // 必须在点击事件里同步打开窗口，否则会被弹窗拦截
+    if (scanWin && !scanWin.closed) { try { scanWin.close(); } catch (e) {} }
+    var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    var w = null;
+    try { w = window.open('', 'dd_scanner_' + nonce); } catch (e) { w = null; }
+    if (!w) { alert(t('scan_popup_blocked')); return; }
+    try {
+      w.document.open();
+      w.document.write(scannerPageHtml(nonce));
+      w.document.close();
+    } catch (e) {
+      try { w.close(); } catch (x) {}
+      alert(t('scan_popup_fail') + '\n' + (e && (e.name + ': ' + e.message)));
+      return;
+    }
+    scanWin = w; scanNonce = nonce;
+  });
+
+  // ---------- 选择媒体 ----------
+  $('btnPhoto').addEventListener('click', function () { $('inPhoto').click(); });
+  $('btnVideo').addEventListener('click', function () { $('inVideo').click(); });
+  $('btnPick').addEventListener('click', function () { $('inPick').click(); });
+  ['inPhoto', 'inVideo', 'inPick'].forEach(function (id) {
+    $(id).addEventListener('change', function () {
+      var fs = Array.prototype.slice.call(this.files || []);
+      this.value = '';
+      fs.forEach(addFile);
+      render();
+    });
+  });
+
+  function kindOf(f) {
+    var t = f.type || '';
+    if (/^image\//.test(t)) return 'image';
+    if (/^video\//.test(t)) return 'video';
+    if (/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)) return 'image';
+    if (/\.(mp4|mov|m4v|3gp|webm)$/i.test(f.name)) return 'video';
+    return '';
+  }
+  function guessMime(f, kind) {
+    if (f.type) return f.type;
+    var ext = (/\.([a-z0-9]+)$/i.exec(f.name) || [, ''])[1].toLowerCase();
+    var map = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif',
+      webp: 'image/webp', mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/mp4', '3gp': 'video/3gpp', webm: 'video/webm' };
+    return map[ext] || (kind === 'video' ? 'video/mp4' : 'image/jpeg');
+  }
+
+  function addFile(f) {
+    var kind = kindOf(f);
+    if (!kind) { toast('unsupported', f.name); return; }
+    if (kind === 'video' && f.size > VIDEO_WARN &&
+        !confirm(t('big_video', f.name, fmtMB(f.size)))) return;
+    state.items.push({
+      id: 'f' + (++state.seq), file: f, kind: kind, mime: guessMime(f, kind),
+      url: URL.createObjectURL(f), status: 'ready', progress: 0, blob: null, uploadId: null, offset: 0, msg: ''
+    });
+  }
+
+  function removeItem(id) {
+    if (state.uploading) return;
+    state.items = state.items.filter(function (it) {
+      if (it.id === id) { URL.revokeObjectURL(it.url); return false; }
+      return true;
+    });
+    render();
+  }
+
+  // ---------- 渲染列表 ----------
+  function render() {
+    var ul = $('list'); ul.innerHTML = '';
+    state.items.forEach(function (it) {
+      var li = document.createElement('li');
+      li.className = 'item' + (it.status === 'done' ? ' done' : it.status === 'fail' ? ' fail' : '');
+      var th;
+      if (it.kind === 'image') { th = document.createElement('img'); th.src = it.url; th.alt = ''; }
+      else { th = document.createElement('video'); th.src = it.url + '#t=0.1'; th.muted = true; th.setAttribute('playsinline', ''); th.preload = 'metadata'; }
+      th.className = 'thumb'; li.appendChild(th);
+
+      var meta = document.createElement('div'); meta.className = 'meta';
+      var nm = document.createElement('div'); nm.className = 'nm';
+      nm.textContent = (it.kind === 'video' ? '🎥 ' : '📷 ') + it.file.name;
+      var st = document.createElement('div');
+      st.className = 'st' + (it.status === 'done' ? ' ok' : it.status === 'fail' ? ' err' : '');
+      var size = it.blob ? it.blob.size : it.file.size;
+      st.textContent = it.status === 'ready' ? t('it_ready', fmtMB(size))
+        : it.status === 'prep' ? t('it_prep')
+        : it.status === 'up' ? t('it_up', Math.round(it.progress * 100), fmtMB(size))
+        : it.status === 'done' ? t('it_done')
+        : ('✘ ' + (it.err ? errText(it.err) : t('it_fail')));
+      var bar = document.createElement('div'); bar.className = 'bar';
+      var bi = document.createElement('i'); bi.style.width = Math.round(it.progress * 100) + '%'; bar.appendChild(bi);
+      meta.appendChild(nm); meta.appendChild(st); meta.appendChild(bar);
+      li.appendChild(meta);
+
+      if (it.status === 'fail' && !state.uploading) {
+        var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'retry'; rb.textContent = t('retry');
+        rb.addEventListener('click', function () { startUploadAll(); });
+        li.appendChild(rb);
+      }
+      if (!state.uploading && it.status !== 'done') {
+        var xb = document.createElement('button'); xb.type = 'button'; xb.className = 'x'; xb.textContent = '×';
+        xb.setAttribute('aria-label', t('remove'));
+        xb.addEventListener('click', function () { removeItem(it.id); });
+        li.appendChild(xb);
+      }
+      it._st = st; it._bar = bi;
+      ul.appendChild(li);
+    });
+    updateFooter();
+  }
+
+  function updateProgress(it) {
+    if (it._bar) it._bar.style.width = Math.round(it.progress * 100) + '%';
+    if (it._st && it.status === 'up') {
+      it._st.textContent = t('it_up', Math.round(it.progress * 100), fmtMB((it.blob || it.file).size));
+    }
+  }
+
+  function pending() { return state.items.filter(function (it) { return it.status !== 'done'; }); }
+  function updateFooter(final) {
+    var p = pending(), failed = state.items.filter(function (it) { return it.status === 'fail'; }).length;
+    var s = $('summary'), btn = $('submit');
+    s.className = '';
+    if (state.uploading) {
+      var done = state.items.length - p.length;
+      s.textContent = t('sum_uploading', done, state.items.length);
+      btn.disabled = true; btn.textContent = t('btn_uploading');
+      return;
+    }
+    if (final !== undefined) state.final = final;        // 成功提示保存下来，切换语言时重新显示
+    if (state.items.length) state.final = null;
+    if (state.final) { s.className = 'ok'; s.textContent = t('sum_ok', state.final.n); }
+    else if (!state.items.length) s.textContent = t('sum_none');
+    else if (failed) { s.className = 'err'; s.textContent = t('sum_failed', failed); }
+    else s.textContent = t('sum_selected', p.length);
+    btn.disabled = !p.length;
+    btn.textContent = failed ? t('btn_retry_failed') : t('btn_submit');
+  }
+
+  // ---------- 图片压缩 ----------
+  function loadImage(blob) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('decode')); };
+      img.src = url;
+    });
+  }
+  function compressImage(it) {
+    var f = it.file;
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(it.mime)) return Promise.resolve(null);
+    return loadImage(f).then(function (img) {
+      var w = img.naturalWidth, h = img.naturalHeight, edge = Math.max(w, h);
+      if (!w || !h) return null;
+      if (edge <= IMG_MAX_EDGE && f.size <= IMG_SKIP_BYTES && it.mime !== 'image/heic' && it.mime !== 'image/heif') return null;
+      var scale = Math.min(1, IMG_MAX_EDGE / edge);
+      var c = document.createElement('canvas');
+      c.width = Math.round(w * scale); c.height = Math.round(h * scale);
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      return new Promise(function (resolve) {
+        c.toBlob(function (b) { resolve(b && b.size < f.size ? b : null); }, 'image/jpeg', IMG_QUALITY);
+      });
+    }).catch(function () { return null; }); // 解码失败就传原图
+  }
+  function prepare(it) {
+    if (it.blob || it.kind !== 'image') return Promise.resolve();
+    return compressImage(it).then(function (b) {
+      if (b) { it.blob = b; it.mime = 'image/jpeg'; it.uploadName = it.file.name.replace(/\.[^.]+$/, '') + '.jpg'; }
+    });
+  }
+
+  // ---------- 分块上传 ----------
+  function blobToBase64(b) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { var s = String(r.result); resolve(s.slice(s.indexOf(',') + 1)); };
+      r.onerror = function () { reject(codedError('E_READ_FILE')); };
+      r.readAsDataURL(b);
+    });
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function readMeta() {
+    return {
+      operator: $('operator').value.trim(), cabinet: $('cabinet').value.trim(), channel: currentChannel(),
+      batch: $('batch').value.trim(), shotType: state.shotType, note: $('note').value.trim()
+    };
+  }
+  function validate(m) {
+    if (!m.operator) return ['operator', 'v_operator'];
+    if (!m.cabinet) return ['cabinet', 'v_cabinet'];
+    if (!m.channel) return [state.channel === '__custom' ? 'channelCustom' : null, 'v_channel'];
+    if (!m.batch) return ['batch', 'v_batch'];
+    if (SHOT_TYPES.indexOf(m.shotType) < 0) return [null, 'v_shot'];
+    return null;
+  }
+
+  function sendChunks(it) {
+    var data = it.blob || it.file, total = data.size;
+    function loop() {
+      if (it.offset >= total) return Promise.reject(codedError('E_UPLOAD_END'));
+      var end = Math.min(it.offset + CHUNK, total);
+      var attempt = 0;
+      function tryOnce() {
+        return blobToBase64(data.slice(it.offset, end))
+          .then(function (b64) { return call('uploadChunk', it.uploadId, it.offset, b64); })
+          .catch(function (e) {
+            attempt++;
+            if (attempt > MAX_RETRY || isExpired(parseErr(e))) throw e;
+            return sleep(1000 * attempt)
+              .then(function () { return call('queryUpload', it.uploadId); })
+              .then(function (r) {
+                if (r && r.done) return r;
+                it.offset = r.next; end = Math.min(it.offset + CHUNK, total);
+                return tryOnce();
+              }, function () { return tryOnce(); });
+          });
+      }
+      return tryOnce().then(function (r) {
+        if (r && r.done) { it.progress = 1; return r; }
+        it.offset = r.next; it.progress = it.offset / total; updateProgress(it);
+        return loop();
+      });
+    }
+    return loop();
+  }
+
+  function uploadOne(it, meta, ctx) {
+    it.status = 'prep'; it.err = null; render();
+    return prepare(it).then(function () {
+      it.status = 'up'; render();
+      if (it.uploadId) {
+        // 断点续传：先问服务器已经收到多少
+        return call('queryUpload', it.uploadId).then(function (r) {
+          if (r.done) return r;
+          it.offset = r.next; return sendChunks(it);
+        }, function () { it.uploadId = null; it.offset = 0; return uploadOne2(it, meta, ctx); });
+      }
+      return uploadOne2(it, meta, ctx);
+    }).then(function () {
+      it.status = 'done'; it.progress = 1; render();
+    }).catch(function (e) {
+      it.status = 'fail'; it.err = parseErr(e);
+      if (isExpired(it.err)) { it.uploadId = null; it.offset = 0; it.progress = 0; }
+      render();
+    });
+  }
+  function uploadOne2(it, meta, ctx) {
+    var data = it.blob || it.file;
+    var info = { name: it.uploadName || it.file.name, mimeType: it.mime, size: data.size, seq: ++ctx.seq };
+    return call('startUpload', meta, info, ctx.ts).then(function (r) {
+      ctx.ts = r.ts; it.uploadId = r.uploadId; it.offset = 0;
+      return sendChunks(it);
+    });
+  }
+
+  function startUploadAll() {
+    if (state.uploading) return;
+    var meta = readMeta(), bad = validate(meta);
+    if (bad) { toast(bad[1]); if (bad[0]) $(bad[0]).focus(); return; }
+    store('operator', meta.operator); store('cabinet', meta.cabinet); store('channel', meta.channel);
+    var todo = pending();
+    if (!todo.length) return;
+    state.uploading = true; render();
+    var ctx = { ts: null, seq: state.items.length - todo.length };
+    var chain = Promise.resolve();
+    todo.forEach(function (it) { chain = chain.then(function () { return uploadOne(it, meta, ctx); }); });
+    chain.then(function () {
+      state.uploading = false;
+      var ok = state.items.filter(function (it) { return it.status === 'done'; }).length;
+      var failed = state.items.filter(function (it) { return it.status === 'fail'; }).length;
+      if (!failed) {
+        state.items.forEach(function (it) { URL.revokeObjectURL(it.url); });
+        state.items = [];
+        render();
+        updateFooter({ n: ok });
+        toast('toast_ok', ok);
+      } else {
+        render();
+      }
+    });
+  }
+  $('submit').addEventListener('click', startUploadAll);
+
+  window.addEventListener('beforeunload', function (e) {
+    if (state.uploading) { e.preventDefault(); e.returnValue = t('leave'); return e.returnValue; }
+  });
+
+  // ---------- 切换语言：只重绘文字，不动表单值、已选文件和批次卡片数据 ----------
+  function applyLang(l) {
+    lang = l === 'en' ? 'en' : 'zh';
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-ph]'), function (el) { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+    document.title = t('title');
+    $('ver').textContent = t('footer', VERSION);
+    renderCard(); renderScanInfo(); renderOpHint();
+    if (toast._spec && $('toast').style.display === 'block') $('toast').textContent = t.apply(null, toast._spec);
+    render();                       // 文件列表和底部按钮（render 会调用 updateFooter）
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+    b.addEventListener('click', function () { applyLang(b.getAttribute('data-lang')); });
+  });
+
+  applyLang(lang);
+})();
+</script>
+</body>
+</html>
