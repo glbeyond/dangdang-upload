@@ -46,6 +46,16 @@
   .bcard .pick { display:block; width:100%; text-align:left; margin-top:8px; padding:10px 12px; border:1px solid #c3d6fb;
     border-radius:10px; background:#fff; font-size:15px; min-height:48px; }
   .ver { text-align:center; font-size:11px; color:#9aa0a6; margin-top:4px; }
+  .ver a { color:#1a73e8; text-decoration:none; cursor:pointer; }
+  .clog-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60; display:flex; align-items:flex-end; justify-content:center; }
+  .clog { background:#fff; width:100%; max-width:640px; max-height:80vh; overflow:auto; border-radius:16px 16px 0 0;
+    padding:16px 18px calc(16px + env(safe-area-inset-bottom)); box-sizing:border-box; }
+  .clog h2 { font-size:18px; margin:0 0 4px; display:flex; justify-content:space-between; align-items:center; }
+  .clog .own { font-size:13px; color:#5f6368; margin-bottom:10px; }
+  .clog .v { border-top:1px solid #eee; padding:10px 0; }
+  .clog .v b { font-size:15px; } .clog .v span { font-size:12px; color:#9aa0a6; margin-left:6px; }
+  .clog ul { margin:6px 0 0; padding-left:20px; font-size:14px; line-height:1.55; color:#202124; }
+  .clog-x { border:0; background:#f1f3f4; border-radius:18px; width:36px; height:36px; font-size:18px; color:#5f6368; }
   .chip { min-height:54px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:17px; font-weight:700; color:var(--txt); }
   .chip.on { border-color:var(--pri); background:#e8f0fe; color:var(--pri); }
   button { font:inherit; cursor:pointer; }
@@ -149,11 +159,16 @@
   <div class="in">
     <div id="summary"></div>
     <button type="button" class="btn pri" id="submit" disabled></button>
-    <div class="ver" id="ver"></div>
+    <div class="ver"><span id="ver"></span> · <span id="owner"></span> · <a id="clogBtn" role="button" tabindex="0"></a></div>
   </div>
 </footer>
 
 <div class="toast" id="toast"></div>
+<div class="clog-mask hidden" id="clogMask"><div class="clog" role="dialog" aria-modal="true">
+  <h2><span id="clogTitle"></span><button type="button" class="clog-x" id="clogClose" aria-label="Close">×</button></h2>
+  <div class="own" id="clogOwner"></div>
+  <div id="clogBody"></div>
+</div></div>
 
 
 <script>
@@ -164,7 +179,18 @@
   var VIDEO_WARN = 300 * 1024 * 1024;
   var IMG_MAX_EDGE = 2000, IMG_QUALITY = 0.85, IMG_SKIP_BYTES = 1.5 * 1024 * 1024;
   var MAX_RETRY = 3;
-  var VERSION = 'v6';
+  var VERSION = 'v7';
+  var OWNER = 'Tino';
+  // 版本更新记录：新版本加在最前面
+  var CHANGELOG = [
+    { v:'v7', d:'2026-11-10', zh:['页面底部新增“版本更新记录”和网站所有人信息'], en:['Added this version history and the site owner to the page footer'] },
+    { v:'v6', d:'2026-11-10', zh:['扫码或输入批次号后自动填写柜号和渠道','操作人填写一次后一直记住，换人时直接修改','页面迁移到 GitHub Pages，普通 Chrome 窗口（多个 Google 账号登录）也能直接打开'], en:['Cabinet No. and channel auto-fill after scanning or entering a batch number','Operator name is remembered until changed','Page moved to GitHub Pages so it opens in a normal Chrome window, even with several Google accounts signed in'] },
+    { v:'v5', d:'2026-11-09', zh:['扫码引擎升级：优先系统原生识别，备用 zxing-wasm，条形码更快更稳','同时支持条形码和二维码','新增变焦、手电筒、切换摄像头和点按对焦'], en:['Faster, more reliable scanning: native detector first, zxing-wasm as backup','Reads both barcodes and QR codes','Added zoom, torch, camera switch and tap-to-focus'] },
+    { v:'v4', d:'2026-11-09', zh:['修复点击扫码黑屏：改为在独立窗口实时扫码，不是拍照识别'], en:['Fixed the black screen on Scan: live scanning now opens in its own window'] },
+    { v:'v3', d:'2026-11-09', zh:['新增中文 / EN 切换，提交的数据仍保持中文标准值'], en:['Added Chinese / English toggle; saved values stay in standard Chinese'] },
+    { v:'v2', d:'2026-11-09', zh:['新增批次号扫码（扫码结果自动去掉最后 4 位）','按批次清单自动查询柜号、渠道、属性、收件人、城市和件数','渠道新增自定义，拍摄类型调整为 数量确认 / 打托完成 / 出货记录 / 异常反馈'], en:['Added batch number scanning (last 4 characters removed automatically)','Looks up cabinet, channel, attribute, recipient, city and pieces from the batch list','Custom channel option; shot types: quantity check / palletized / outbound / exception'] },
+    { v:'v1', d:'2026-11-09', zh:['首版上线：拍照 / 录视频后上传到云端硬盘，自动写入上传记录，员工无需登录'], en:['First release: take photos or videos and upload to Google Drive with an automatic log; no login needed'] }
+  ];
   // 静态网页模式使用的后端地址（Apps Script 部署的 /exec 地址；更新部署时请保持同一个部署，地址不变）
   var API_URL = 'https://script.google.com/macros/s/AKfycbyLweDkN1nUaDtzcUh_Ax35OSPSNPUgNASfk0N7ueYT9lrpv5xzNcgCq9FVitztDleb6A/exec';
   var DEFAULT_CHANNELS = ['UPS', 'BRT', 'RABEN', '自提'];
@@ -1192,6 +1218,9 @@
     });
     document.title = t('title');
     $('ver').textContent = t('footer', VERSION);
+    $('owner').textContent = (lang === 'en' ? 'Site owner: ' : '网站所有人：') + OWNER;
+    $('clogBtn').textContent = lang === 'en' ? 'Version history' : '版本更新记录';
+    renderClog();
     renderCard(); renderScanInfo(); renderOpHint();
     if (toast._spec && $('toast').style.display === 'block') $('toast').textContent = t.apply(null, toast._spec);
     render();                       // 文件列表和底部按钮（render 会调用 updateFooter）
@@ -1199,6 +1228,24 @@
   Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
     b.addEventListener('click', function () { applyLang(b.getAttribute('data-lang')); });
   });
+
+  // ---------- 版本更新记录 ----------
+  function escH(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function renderClog() {
+    var en = lang === 'en';
+    $('clogTitle').textContent = en ? 'Version history' : '版本更新记录';
+    $('clogOwner').textContent = (en ? 'Site owner: ' : '网站所有人：') + OWNER + (en ? ' · Current version ' : ' · 当前版本 ') + VERSION;
+    $('clogBody').innerHTML = CHANGELOG.map(function (e) {
+      return '<div class="v"><b>' + escH(e.v) + '</b><span>' + escH(e.d) + '</span><ul>' +
+        (en ? e.en : e.zh).map(function (x) { return '<li>' + escH(x) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+  }
+  function openClog() { $('clogMask').classList.remove('hidden'); }
+  function closeClog() { $('clogMask').classList.add('hidden'); }
+  $('clogBtn').addEventListener('click', openClog);
+  $('clogBtn').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openClog(); } });
+  $('clogClose').addEventListener('click', closeClog);
+  $('clogMask').addEventListener('click', function (e) { if (e.target === $('clogMask')) closeClog(); });
 
   applyLang(lang);
 })();
