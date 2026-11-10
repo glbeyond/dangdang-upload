@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>dangdang 影像记录查询</title>
+<style>
+  :root { --pri:#1a73e8; --ok:#188038; --err:#d93025; --warn:#b06000; --bg:#f4f6f9; --card:#fff; --line:#dfe3ea; --txt:#1f2328; --sub:#667085; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--txt);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+  header { position:relative; background:var(--pri); color:#fff; padding:14px 16px 0; padding-top:max(14px, env(safe-area-inset-top)); }
+  header .in { max-width:1180px; margin:0 auto; position:relative; padding-right:110px; padding-bottom:12px; }
+  .lang { position:absolute; right:0; top:0; display:flex; border:1px solid rgba(255,255,255,.7); border-radius:18px; overflow:hidden; }
+  .lang button { border:0; background:transparent; color:#fff; font-size:14px; font-weight:600; padding:0 12px; min-height:34px; min-width:44px; }
+  .lang button.on { background:#fff; color:var(--pri); }
+  header h1 { margin:0; font-size:19px; }
+  header p { margin:2px 0 0; font-size:13px; opacity:.85; }
+  nav { max-width:1180px; margin:0 auto; display:flex; gap:4px; overflow-x:auto; }
+  nav button { border:0; background:transparent; color:rgba(255,255,255,.85); font-size:15px; font-weight:600; padding:10px 14px; border-radius:10px 10px 0 0; white-space:nowrap; }
+  nav button.on { background:var(--bg); color:var(--pri); }
+  main { padding:14px 12px 40px; max-width:1180px; margin:0 auto; }
+  .card { background:var(--card); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .card h2 { font-size:16px; margin:0 0 10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card h2 .sp { flex:1; }
+  label.f { display:block; font-weight:600; margin:0 0 4px; font-size:13px; color:var(--sub); }
+  input[type=text], input[type=date], input[type=password], select { width:100%; font-size:15px; padding:9px 10px; border:1px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--txt); font-family:inherit; }
+  input:focus, select:focus { outline:2px solid rgba(26,115,232,.35); border-color:var(--pri); }
+  button { font:inherit; cursor:pointer; }
+  .btn { min-height:40px; padding:0 14px; border:0; border-radius:10px; font-size:15px; font-weight:600; background:#e8eaed; color:var(--txt); white-space:nowrap; }
+  .btn.pri { background:var(--pri); color:#fff; } .btn.ok { background:#e6f4ea; color:var(--ok); }
+  .btn.sm { min-height:32px; font-size:13px; padding:0 10px; border-radius:8px; }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; align-items:flex-end; }
+  .row > .grow { flex:1; min-width:0; }
+  .grid-f { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:10px; align-items:end; }
+  .hint { color:var(--sub); font-size:13px; }
+  .muted { color:var(--sub); }
+  .hidden { display:none !important; }
+  a { color:var(--pri); text-decoration:none; } a:hover { text-decoration:underline; }
+  .cabs { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
+  .cab { border:2px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff; text-align:left; }
+  .cab.on { border-color:var(--pri); background:#f3f7ff; }
+  .cab b { font-size:18px; } .cab .s { font-size:13px; color:var(--sub); margin-top:2px; }
+  .prog { height:6px; background:#eceff3; border-radius:3px; overflow:hidden; margin-top:8px; }
+  .prog i { display:block; height:100%; background:var(--ok); }
+  .tag { display:inline-block; font-size:12px; font-weight:700; padding:1px 7px; border-radius:10px; background:#eef1f5; color:var(--sub); white-space:nowrap; }
+  .tag.exc { background:#fde7e9; color:var(--err); } .tag.ok { background:#e6f4ea; color:var(--ok); } .tag.warn { background:#fef7e0; color:var(--warn); }
+  .tag.t0 { background:#e8f0fe; color:#1967d2; } .tag.t1 { background:#e6f4ea; color:#137333; } .tag.t2 { background:#f3e8fd; color:#8430ce; } .tag.t3 { background:#fde7e9; color:#c5221f; }
+  .tw { overflow:auto; max-height:70vh; border:1px solid var(--line); border-radius:10px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { padding:7px 9px; border-bottom:1px solid #eef0f3; text-align:left; white-space:nowrap; vertical-align:middle; }
+  th { background:#f8f9fb; font-size:13px; color:var(--sub); position:sticky; top:0; z-index:1; }
+  tr.clk { cursor:pointer; } tr.clk:hover td { background:#f6f9ff; }
+  td.c, th.c { text-align:center; } td.wrap { white-space:normal; min-width:140px; max-width:320px; word-break:break-word; }
+  .yes { color:var(--ok); font-weight:700; } .no { color:#c4c9d0; } .exc { color:var(--err); font-weight:700; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+  .fchip { border:1px solid var(--line); background:#fff; border-radius:16px; padding:4px 12px; font-size:13px; font-weight:600; color:var(--txt); }
+  .fchip.on { border-color:var(--pri); background:#e8f0fe; color:var(--pri); }
+  .bcard { border-radius:12px; padding:12px; font-size:14px; background:#e6f4ea; border:1px solid #b7dfc2; margin-top:10px; }
+  .bcard.miss { background:#fef7e0; border-color:#f6d77a; color:#7a5300; }
+  .bcard .g { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px 14px; }
+  .bcard .g div span { display:block; font-size:12px; color:var(--sub); } .bcard .g div b { word-break:break-word; }
+  .pick { display:inline-block; margin:6px 6px 0 0; }
+  .scaninfo { font-size:13px; margin-top:6px; color:var(--sub); word-break:break-all; } .scaninfo b { color:var(--txt); } .scaninfo.warn { color:var(--warn); }
+  .tl-day { font-weight:700; margin:14px 0 6px; color:var(--sub); font-size:13px; }
+  .tl { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .it { border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; display:flex; flex-direction:column; }
+  .it.it-exc { border-color:#f4b7bd; }
+  .th { position:relative; aspect-ratio:4/3; background:#1f2328; cursor:zoom-in; display:flex; align-items:center; justify-content:center; color:#fff; overflow:hidden; }
+  .th img { width:100%; height:100%; object-fit:cover; display:block; }
+  .th .ph { font-size:34px; opacity:.75; text-align:center; }
+  .th .play + .ph, .th .ph.v { padding-top:70px; }
+  .th .ph small { display:block; font-size:11px; opacity:.8; margin-top:4px; padding:0 8px; }
+  .th .play { position:absolute; width:46px; height:46px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; font-size:20px; pointer-events:none; }
+  .it .bd { padding:8px 10px; font-size:13px; display:flex; flex-direction:column; gap:3px; }
+  .it .bd .l1 { display:flex; gap:6px; align-items:center; justify-content:space-between; }
+  .it .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--sub); font-size:12px; }
+  .it .note { word-break:break-word; }
+  .it .lk { display:flex; gap:10px; font-size:13px; margin-top:2px; }
+  .mini { width:56px; height:42px; border-radius:6px; object-fit:cover; background:#1f2328; display:block; }
+  .mini.ph { display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+  .counts { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .empty { text-align:center; color:var(--sub); padding:30px 10px; }
+  .spin { display:inline-block; width:16px; height:16px; border:2px solid #c6d3ea; border-top-color:var(--pri); border-radius:50%; animation:sp 0.8s linear infinite; vertical-align:-3px; margin-right:6px; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  .err-box { background:#fde7e9; color:var(--err); border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; word-break:break-word; }
+  .ok-box { background:#e6f4ea; color:var(--ok); border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
+  .gate { max-width:440px; margin:40px auto; }
+  .lb { position:fixed; inset:0; background:rgba(0,0,0,.86); z-index:70; display:flex; flex-direction:column; }
+  .lb .top { display:flex; align-items:center; gap:10px; padding:10px 14px; color:#fff; font-size:14px; }
+  .lb .top .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb .top a { color:#8ab4f8; }
+  .lb .stage { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:0 50px 14px; position:relative; }
+  .lb .stage img { max-width:100%; max-height:100%; object-fit:contain; }
+  .lb .stage iframe { width:min(100%, 1000px); height:100%; border:0; background:#000; border-radius:8px; }
+  .lb .nav { position:absolute; top:50%; transform:translateY(-50%); width:40px; height:60px; border:0; border-radius:8px; background:rgba(255,255,255,.15); color:#fff; font-size:24px; }
+  .lb .nav.p { left:6px; } .lb .nav.n { right:6px; }
+  .lb .x { border:0; background:rgba(255,255,255,.15); color:#fff; width:36px; height:36px; border-radius:18px; font-size:18px; }
+  .lb .cap { color:#ddd; font-size:13px; text-align:center; padding:0 14px 12px; }
+  .ver { text-align:center; font-size:11px; color:#9aa0a6; margin-top:14px; }
+  .ver a { color:#1a73e8; text-decoration:none; cursor:pointer; }
+  .clog-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60; display:flex; align-items:flex-end; justify-content:center; }
+  .clog { background:#fff; width:100%; max-width:640px; max-height:80vh; overflow:auto; border-radius:16px 16px 0 0;
+    padding:16px 18px calc(16px + env(safe-area-inset-bottom)); box-sizing:border-box; }
+  .clog h2 { font-size:18px; margin:0 0 4px; display:flex; justify-content:space-between; align-items:center; }
+  .clog .own { font-size:13px; color:#5f6368; margin-bottom:10px; }
+  .clog .v { border-top:1px solid #eee; padding:10px 0; }
+  .clog .v b { font-size:15px; } .clog .v span { font-size:12px; color:#9aa0a6; margin-left:6px; }
+  .clog ul { margin:6px 0 0; padding-left:20px; font-size:14px; line-height:1.55; color:#202124; }
+  .clog-x { border:0; background:#f1f3f4; border-radius:18px; width:36px; height:36px; font-size:18px; color:#5f6368; }
+  .toast { position:fixed; left:50%; top:20px; transform:translateX(-50%); background:rgba(32,33,36,.92); color:#fff;
+    padding:10px 16px; border-radius:10px; font-size:15px; z-index:80; max-width:90%; text-align:center; display:none; }
+  .it.hid { opacity:.5; background:#f6f7f9; } tr.hid td { opacity:.5; background:#f6f7f9; }
+  .hbtn { border:1px solid var(--line); background:#fff; border-radius:8px; font-size:12px; padding:2px 8px; color:var(--sub); }
+  .hbtn:hover { border-color:var(--err); color:var(--err); } .hid .hbtn { opacity:1; border-color:var(--pri); color:var(--pri); }
+  .tag.hid { background:#5f6368; color:#fff; }
+  .cl { display:grid; grid-template-columns:minmax(120px,auto) 1fr auto; gap:8px; align-items:center; padding:8px 0; border-top:1px solid #eef0f3; }
+  .cl:first-child { border-top:0; } .cl input { font-size:13px; padding:7px 9px; } .cl .nm2 b { display:block; } .cl .nm2 span { font-size:12px; color:var(--sub); }
+  @media (max-width:600px) { .cl { grid-template-columns:1fr auto; } .cl .nm2 { grid-column:1 / -1; } }
+  .msg-card { max-width:520px; margin:40px auto; text-align:center; }
+  .msg-card .ic { font-size:40px; } .msg-card h2 { justify-content:center; }
+  .lb .top a.dl { margin-left:4px; }
+  @media (max-width:600px) { .lb .stage { padding:0 4px 10px; } .lb .nav { display:none; } th, td { padding:6px 7px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="in">
+    <h1 data-i18n="title">dangdang 影像记录查询</h1>
+    <p id="subT" data-i18n="subtitle">查看每个批次的数量确认、打托、出货和异常影像留档</p>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="zh" lang="zh-CN">中文</button><button type="button" data-lang="en" lang="en">EN</button>
+    </div>
+  </div>
+  <nav id="tabs" class="hidden">
+    <button type="button" data-tab="cabs" data-i18n="tab_cabs">我的柜号</button>
+    <button type="button" data-tab="batch" data-i18n="tab_batch">批次查询</button>
+  </nav>
+</header>
+
+<main>
+  <section class="card msg-card hidden" id="msgCard">
+    <div class="ic" id="msgIc">🔗</div>
+    <h2 id="msgT"></h2>
+    <div class="hint" id="msgD"></div>
+    <div style="margin-top:12px" id="msgBtnW" class="hidden"><button type="button" class="btn pri" id="msgRetry" data-i18n="retry">重试</button></div>
+  </section>
+  <section class="card hidden" id="bootCard"><div id="bootBody"></div></section>
+
+  <section id="p-cabs" class="hidden">
+    <div class="card">
+      <h2><span data-i18n="my_cabs">我的柜号</span><span class="muted" id="cabsSub" style="font-weight:400;font-size:13px"></span><span class="sp"></span>
+        <button type="button" class="btn sm" id="cabsReload" data-i18n="reload">刷新</button></h2>
+      <div id="cabList"></div>
+    </div>
+    <div class="card hidden" id="cabCard">
+      <h2><span id="cabTitle"></span><span class="sp"></span>
+        <button type="button" class="btn sm ok" id="cabExport" data-i18n="export">导出 Excel</button></h2>
+      <div class="filters" id="cabFilters">
+        <button type="button" class="fchip on" data-f="all" data-i18n="f_all">全部</button>
+        <button type="button" class="fchip" data-f="done" data-i18n="f_done">三类齐全</button>
+        <button type="button" class="fchip" data-f="missing" data-i18n="f_missing">缺记录</button>
+        <button type="button" class="fchip" data-f="exc" data-i18n="f_exc">有异常</button>
+        <select id="cabCh" style="width:auto;padding:5px 8px;font-size:13px"></select>
+        <input type="text" id="cabQ" style="width:220px;padding:5px 10px;font-size:13px" data-i18n-ph="ph_filter" placeholder="筛选批次号 / 收件人 / 城市">
+      </div>
+      <div id="cabBody"></div>
+    </div>
+  </section>
+
+  <section id="p-batch" class="hidden">
+    <div class="card">
+      <label class="f" for="bIn" data-i18n="f_batch">批次号</label>
+      <div class="row">
+        <input type="text" id="bIn" class="grow" maxlength="80" data-i18n-ph="ph_batch" placeholder="输入或扫码" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="button" class="btn pri" id="scanBtn">📷 <span data-i18n="scan">扫码</span></button>
+        <button type="button" class="btn" id="bGo" data-i18n="query">查询</button>
+      </div>
+      <div class="scaninfo hidden" id="scanInfo"></div>
+      <div id="bInfo"></div>
+    </div>
+    <div class="card hidden" id="bTimelineCard">
+      <h2><span data-i18n="timeline">影像时间线</span><span class="muted" id="bCount" style="font-weight:400;font-size:13px"></span><span class="sp"></span>
+        <button type="button" class="btn sm ok" id="bExport" data-i18n="export">导出 Excel</button></h2>
+      <div class="filters" id="bTypeF"></div>
+      <div id="bTimeline"></div>
+    </div>
+  </section>
+
+  <div class="ver"><span id="ver"></span> · <span id="owner"></span> · <a id="clogBtn" role="button" tabindex="0"></a></div>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="lb hidden" id="lb">
+  <div class="top"><span class="t" id="lbT"></span><a id="lbOpen" target="_blank" rel="noopener"></a><a id="lbDl" class="dl" target="_blank" rel="noopener"></a><button type="button" class="x" id="lbX" aria-label="Close">×</button></div>
+  <div class="stage" id="lbStage"></div>
+  <div class="cap" id="lbCap"></div>
+</div>
+<div class="clog-mask hidden" id="clogMask"><div class="clog" role="dialog" aria-modal="true">
+  <h2><span id="clogTitle"></span><button type="button" class="clog-x" id="clogClose" aria-label="Close">×</button></h2>
+  <div class="own" id="clogOwner"></div>
+  <div id="clogBody"></div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+
+  var VERSION = 'v1';
+  var OWNER = 'Tino';
+  // 版本更新记录：新版本加在最前面
+  var CHANGELOG = [
+    { v:'v1', d:'2026-11-10', zh:['客户查询端首版：打开专属链接即可查看，无需登录','我的柜号、柜内批次四类影像一览、批次影像时间线（含全部异常反馈、操作人和备注）','查看大图 / 播放视频、下载原文件、按批次号查询（支持扫码）、导出 Excel'], en:['First release of the customer page: open your dedicated link, no login needed','Your cabinets, the four media types for every batch, and a media timeline per batch (all exceptions, operators and notes included)','Full-size photos / video playback, original file download, batch lookup (with scanning) and Excel export'] }
+  ];
+  var DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLweDkN1nUaDtzcUh_Ax35OSPSNPUgNASfk0N7ueYT9lrpv5xzNcgCq9FVitztDleb6A/exec';
+  // 本地测试时可用 ?api=… 指向测试后端（只在 localhost 生效）
+  var IS_LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  var QS = (function () { try { return new URLSearchParams(location.search); } catch (e) { return { get: function () { return null; } }; } })();
+  var API_URL = (IS_LOCAL && QS.get('api')) || DEFAULT_API;
+  var TOKEN = String(QS.get('c') || '').trim();
+  var SHOT_TYPES = ['数量确认', '打托完成', '出货记录', '异常反馈'];
+  var CORE_TYPES = ['数量确认', '打托完成', '出货记录'];
+  var XLSX_URLS = ['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+                   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'];
+  var ZXING_BASES = ['https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.6/', 'https://unpkg.com/zxing-wasm@3.1.6/'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  var I18N = {
+    zh: {
+      title: 'dangdang 影像记录查询', subtitle: '查看每个批次的数量确认、打托、出货和异常影像留档', sub_client: '{0} · 影像记录查询',
+      tab_cabs: '我的柜号', tab_batch: '批次查询', my_cabs: '我的柜号', reload: '刷新', export: '导出 Excel', retry: '重试',
+      loading: '正在加载…（第一次打开可能需要 10–20 秒）',
+      no_token_t: '请使用专属链接打开', no_token_d: '这个页面需要通过我们发给您的专属链接打开。如果链接丢失，请联系仓库客服重新获取。',
+      bad_token_t: '链接无效或已停用', bad_token_d: '请确认链接是否完整（包括 ?c= 后面的全部字符），或联系仓库客服获取新的链接。',
+      net_t: '暂时无法连接', net_d: '请检查网络（需要能访问 Google 服务），稍后点「重试」。{0}',
+      cab_t: '{0}柜', cab_s1: '{0} 个批次 · {1} 件', cab_s2: '已上传 {0} / {1} · 三类齐全 {2}', cab_s3: '最后上传 {0}', cab_never: '尚无上传',
+      cab_exc: '异常 {0}', cab_head: '{0}柜 · {1} 个批次', no_cabs: '暂时没有柜号记录', cabs_sub: ' · 共 {0} 个柜',
+      f_all: '全部', f_done: '三类齐全', f_missing: '缺记录', f_exc: '有异常', all_ch: '全部渠道', ph_filter: '筛选批次号 / 收件人 / 城市',
+      c_batch: '批次号', c_cabinet: '柜号', c_channel: '渠道', c_attr: '属性', c_recipient: '收件人', c_city: '城市', c_pieces: '件数',
+      c_type: '拍摄类型', c_operator: '操作人', c_note: '备注', c_file: '文件', c_files: '文件数', c_last: '最后上传', c_time: '上传时间',
+      c_mime: '文件类型', c_size: '大小(MB)', c_link: '文件链接', c_folder: '批次文件夹链接', c_dl: '下载链接',
+      no_rows: '没有符合条件的批次',
+      st_qty: '数量确认', st_pallet: '打托完成', st_ship: '出货记录', st_exc: '异常反馈', ch_self: '自提',
+      f_batch: '批次号', ph_batch: '输入或扫码', scan: '扫码', query: '查询', cancel: '取消',
+      b_found: '批次信息', b_multi: '该批次号出现在多个柜中，请选择：', b_miss: '没有找到这个批次号，请核对后重试',
+      timeline: '影像时间线', b_count: '共 {0} 个文件', b_none: '这个批次还没有上传影像',
+      missing_types: '缺少：{0}', all_types_ok: '数量确认 / 打托完成 / 出货记录 均已上传',
+      open: '查看', download: '下载', open_drive: '在 Google Drive 打开',
+      thumb_fail: '无法显示缩略图', thumb_fail2: '点击在 Drive 打开',
+      x_loading: '正在准备 Excel…', x_fail: 'Excel 组件加载失败，请检查网络后重试', x_done: '已导出 {0}', x_empty: '没有可导出的记录',
+      x_sheet_rec: '影像记录', x_sheet_sum: '批次汇总',
+      scan_raw: '扫码原值：{0} → 去掉后 4 位：{1}', scan_short: '⚠ 扫码结果只有 {0} 位（{1}），未删除字符，请人工核对',
+      scan_empty: '没有识别到内容，请重试或手动输入', scan_toast: '批次号：{0}',
+      scan_popup_blocked: '扫码窗口被浏览器拦截了。请在地址栏右侧允许本网站的弹出窗口，然后再点一次「扫码」。', scan_popup_fail: '无法打开扫码窗口，请重试。',
+      sw_title: '扫码 - dangdang', sw_opening: '正在打开摄像头…', sw_aim: '请将条码 / 二维码对准取景框',
+      sw_switch: '切换摄像头', sw_torch: '手电筒', sw_done: '已识别，正在返回…', sw_back: '已识别。请关闭此页面，回到上传页面。',
+      sw_lib: '扫码组件加载失败，请检查网络后关闭此页面重试。', sw_retry: '重试',
+      sw_err: '无法打开摄像头。',
+      sw_e_NotAllowedError: '摄像头权限被拒绝：请点地址栏左侧的图标，把「摄像头」改为允许，然后点重试。',
+      sw_e_NotFoundError: '没有找到摄像头。',
+      sw_e_NotReadableError: '摄像头正被其他应用或网页占用，请关闭后重试。',
+      sw_e_OverconstrainedError: '没有合适的后置摄像头，请点「切换摄像头」或重试。',
+      sw_e_SecurityError: '当前浏览器不允许网页使用摄像头，请用 Chrome 或 Safari 打开。',
+      sw_engine: '识别引擎：', sw_eng_native: '原生 BarcodeDetector', sw_eng_wasm: 'ZXing-WASM', sw_eng_loading: '加载中…',
+      sw_zoom: '变焦', sw_hint: '条码横放在框内，距离约 10–20 厘米；点画面可对焦', sw_focus: '对焦',
+      sw_e_other: '请重试；如果仍然不行，请把下面的错误信息截图发给管理员。',
+      sw_back: '已识别。请关闭此页面，回到查询页面。',
+      footer: 'dangdang 影像记录查询 {0}', unknown: '未知错误', net_err: '网络错误：{0}', v_batch: '请输入批次号',
+      fld_batch: '批次号', fld_cabinet: '柜号',
+      E_CLIENT_LINK: '链接无效或已停用', E_CLIENT_CAB: '没有这个柜号的查看权限', E_API_FN: '服务正在升级，请稍后再试',
+      E_REQUIRED: '{0}不能为空', E_TOO_LONG: '{0}过长（最多 {1} 个字符）'
+    },
+    en: {
+      title: 'dangdang Media Records', subtitle: 'Quantity-check, pallet, outbound and exception media for every batch', sub_client: '{0} · Media records',
+      tab_cabs: 'My cabinets', tab_batch: 'Batch lookup', my_cabs: 'My cabinets', reload: 'Refresh', export: 'Export Excel', retry: 'Retry',
+      loading: 'Loading… (the first load can take 10–20 s)',
+      no_token_t: 'Please open your dedicated link', no_token_d: 'This page only works through the dedicated link we sent you. If you lost it, please contact the warehouse.',
+      bad_token_t: 'Invalid or disabled link', bad_token_d: 'Please check that the link is complete (everything after ?c=), or ask the warehouse for a new link.',
+      net_t: 'Cannot connect right now', net_d: 'Please check your network (Google services must be reachable) and tap Retry. {0}',
+      cab_t: 'Cabinet {0}', cab_s1: '{0} batches · {1} pcs', cab_s2: 'Uploaded {0} / {1} · all 3 types {2}', cab_s3: 'Last upload {0}', cab_never: 'No uploads yet',
+      cab_exc: 'Exceptions {0}', cab_head: 'Cabinet {0} · {1} batches', no_cabs: 'No cabinets yet', cabs_sub: ' · {0} cabinets',
+      f_all: 'All', f_done: 'All 3 types', f_missing: 'Missing types', f_exc: 'Exceptions', all_ch: 'All channels', ph_filter: 'Filter batch / recipient / city',
+      c_batch: 'Batch No.', c_cabinet: 'Cabinet', c_channel: 'Channel', c_attr: 'Attribute', c_recipient: 'Recipient', c_city: 'City', c_pieces: 'Pieces',
+      c_type: 'Shot type', c_operator: 'Operator', c_note: 'Note', c_file: 'File', c_files: 'Files', c_last: 'Last upload', c_time: 'Uploaded at',
+      c_mime: 'File type', c_size: 'Size (MB)', c_link: 'File link', c_folder: 'Batch folder link', c_dl: 'Download link',
+      no_rows: 'No batches match',
+      st_qty: 'Quantity check', st_pallet: 'Palletized', st_ship: 'Outbound', st_exc: 'Exception', ch_self: 'Self pickup',
+      f_batch: 'Batch No.', ph_batch: 'Type or scan', scan: 'Scan', query: 'Look up', cancel: 'Cancel',
+      b_found: 'Batch info', b_multi: 'This batch number appears in several cabinets, choose one:', b_miss: 'Batch number not found, please check and try again',
+      timeline: 'Media timeline', b_count: '{0} files', b_none: 'No media has been uploaded for this batch yet',
+      missing_types: 'Missing: {0}', all_types_ok: 'Quantity check / palletized / outbound all uploaded',
+      open: 'View', download: 'Download', open_drive: 'Open in Google Drive',
+      thumb_fail: 'Preview unavailable', thumb_fail2: 'Click to open in Drive',
+      x_loading: 'Preparing Excel…', x_fail: 'The Excel component failed to load. Check the network and try again', x_done: 'Exported {0}', x_empty: 'Nothing to export',
+      x_sheet_rec: 'Media records', x_sheet_sum: 'Batch summary',
+      scan_raw: 'Scanned: {0} → last 4 removed: {1}', scan_short: '⚠ Scanned value has only {0} characters ({1}); nothing was removed, please check manually',
+      scan_empty: 'Nothing recognized, please try again or type it in', scan_toast: 'Batch No.: {0}',
+      scan_popup_blocked: 'The browser blocked the scanner window. Allow pop-ups for this site (icon at the right of the address bar), then tap "Scan" again.', scan_popup_fail: 'Could not open the scanner window, please try again.',
+      sw_title: 'Scan - dangdang', sw_opening: 'Opening camera…', sw_aim: 'Point the barcode / QR code into the frame',
+      sw_switch: 'Switch camera', sw_torch: 'Torch', sw_done: 'Scanned, returning…', sw_back: 'Scanned. Please close this page and go back to the upload page.',
+      sw_lib: 'The scanner failed to load. Check the network, close this page and try again.', sw_retry: 'Retry',
+      sw_err: 'Cannot open the camera.',
+      sw_e_NotAllowedError: 'Camera permission was denied: tap the icon at the left of the address bar, set Camera to Allow, then tap Retry.',
+      sw_e_NotFoundError: 'No camera was found.',
+      sw_e_NotReadableError: 'The camera is in use by another app or page. Close it and retry.',
+      sw_e_OverconstrainedError: 'No suitable back camera. Tap "Switch camera" or retry.',
+      sw_e_SecurityError: 'This browser does not allow web pages to use the camera. Open the link in Chrome or Safari.',
+      sw_engine: 'Engine: ', sw_eng_native: 'native BarcodeDetector', sw_eng_wasm: 'ZXing-WASM', sw_eng_loading: 'loading…',
+      sw_zoom: 'Zoom', sw_hint: 'Hold the barcode level inside the frame, about 10–20 cm away; tap to focus', sw_focus: 'Focus',
+      sw_e_other: 'Please retry. If it still fails, send a screenshot of the error below to the admin.',
+      sw_back: 'Scanned. Please close this page and go back to the lookup page.',
+      footer: 'dangdang media records {0}', unknown: 'Unknown error', net_err: 'Network error: {0}', v_batch: 'Please enter a batch number',
+      fld_batch: 'Batch No.', fld_cabinet: 'Cabinet',
+      E_CLIENT_LINK: 'Invalid or disabled link', E_CLIENT_CAB: 'You do not have access to this cabinet', E_API_FN: 'The service is being upgraded, please try again later',
+      E_REQUIRED: '{0} is required', E_TOO_LONG: '{0} is too long (max {1} characters)'
+    }
+  };
+  var LANG_KEY = 'dd_lang';
+  // 默认中文；选择后记住
+  var lang = (function () { var s = ''; try { s = localStorage.getItem(LANG_KEY) || ''; } catch (e) {} return s === 'en' ? 'en' : 'zh'; })();
+  function t(key) {
+    var d = I18N[lang] || I18N.zh, s = d[key] != null ? d[key] : (I18N.zh[key] != null ? I18N.zh[key] : key);
+    var args = Array.prototype.slice.call(arguments, 1);
+    return String(s).replace(/\{(\d)\}/g, function (m, i) { return args[i] != null ? args[i] : ''; });
+  }
+  var ST_LABEL = { '数量确认': 'st_qty', '打托完成': 'st_pallet', '出货记录': 'st_ship', '异常反馈': 'st_exc' };
+  var ST_CLASS = { '数量确认': 't0', '打托完成': 't1', '出货记录': 't2', '异常反馈': 't3' };
+  function stLabel(v) { return ST_LABEL[v] ? t(ST_LABEL[v]) : v; }
+  function chLabel(v) { return v === '自提' ? t('ch_self') : v; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function parseErr(e) {
+    var m = String((e && e.message) || e || '').replace(/^Exception:\s*/, '');
+    var r = /\[(E_[A-Z_]+)((?:\|[^|\]]*)*)\]\s*([\s\S]*)/.exec(m);
+    return r ? { code: r[1], args: r[2] ? r[2].slice(1).split('|') : [], raw: r[3] } : { code: null, args: [], raw: m };
+  }
+  function errMsg(e) {
+    var o = parseErr(e);
+    if (o.code && I18N.zh[o.code]) {
+      var a = o.args.slice();
+      if ((o.code === 'E_REQUIRED' || o.code === 'E_TOO_LONG') && I18N.zh['fld_' + a[0]]) a[0] = t('fld_' + a[0]);
+      return t.apply(null, [o.code].concat(a));
+    }
+    return o.raw || t('unknown');
+  }
+  function toast(key) {
+    var args = Array.prototype.slice.call(arguments, 1), el = $('toast');
+    el.textContent = t.apply(null, [key].concat(args)); el.style.display = 'block';
+    clearTimeout(toast._t); toast._t = setTimeout(function () { el.style.display = 'none'; }, 3000);
+  }
+  function loadingHtml() { return '<div class="empty"><span class="spin"></span>' + esc(t('loading')) + '</div>'; }
+  function errHtml(e) { return '<div class="err-box">' + esc(errMsg(e)) + '</div>'; }
+  function each(root, sel, fn) { Array.prototype.forEach.call(root.querySelectorAll(sel), fn); }
+
+  // ---------- 后台调用（只读；第一个参数是专属链接里的标识） ----------
+  function api(fn) {
+    var args = [TOKEN].concat(Array.prototype.slice.call(arguments, 1));
+    return fetch(API_URL, {
+      method: 'POST', credentials: 'omit', redirect: 'follow', cache: 'no-store',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args })
+    }).then(function (r) {
+      if (!r.ok) throw new Error(t('net_err', 'HTTP ' + r.status));
+      return r.json();
+    }, function (e) { var er = new Error(t('net_err', (e && e.message) || e)); er.net = true; throw er; }).then(function (j) {
+      if (!j || !j.ok) {
+        var err = new Error((j && j.error) || 'bad response');
+        if (parseErr(err).code === 'E_CLIENT_LINK') showMsg('bad');
+        throw err;
+      }
+      return j.result;
+    });
+  }
+
+  // ---------- 启动：校验链接 ----------
+  var PAGES = ['cabs', 'batch'];
+  var state = { msg: null, client: null, tab: 'cabs', cabs: null, cabsErr: null, cabsLoading: false, cab: null, cabErr: null, cabLoading: false,
+                cabSel: '', cabFilter: 'all', cabCh: '', cabQ: '', batch: null, batchErr: null, batchLoading: false, bType: '', scanInfo: null };
+  function showMsg(kind, extra) {
+    state.msg = { kind: kind, extra: extra || '' };
+    $('tabs').classList.add('hidden'); $('bootCard').classList.add('hidden');
+    PAGES.forEach(function (p) { $('p-' + p).classList.add('hidden'); });
+    $('msgCard').classList.remove('hidden'); renderMsg();
+  }
+  function renderMsg() {
+    var m = state.msg; if (!m) return;
+    var k = m.kind === 'none' ? 'no_token' : m.kind === 'bad' ? 'bad_token' : 'net';
+    $('msgIc').textContent = m.kind === 'net' ? '📶' : '🔗';
+    $('msgT').textContent = t(k + '_t'); $('msgD').textContent = t(k + '_d', m.extra);
+    $('msgBtnW').classList.toggle('hidden', m.kind !== 'net');
+  }
+  function boot() {
+    if (!TOKEN) { showMsg('none'); return; }
+    state.msg = null; $('msgCard').classList.add('hidden');
+    $('bootCard').classList.remove('hidden'); $('bootBody').innerHTML = loadingHtml();
+    api('clientInfo').then(function (c) {
+      state.client = c; $('bootCard').classList.add('hidden'); $('tabs').classList.remove('hidden');
+      renderSub(); routeFromHash();
+    }).catch(function (e) {
+      if (parseErr(e).code === 'E_CLIENT_LINK') return;
+      showMsg('net', errMsg(e));
+    });
+  }
+  $('msgRetry').addEventListener('click', boot);
+  function renderSub() { $('subT').textContent = state.client && state.client.name ? t('sub_client', state.client.name) : t('subtitle'); }
+
+  // ---------- 标签页与地址（# 记住当前页；?c= 保持不变） ----------
+  function setTab(tab, noHash) {
+    state.tab = tab;
+    each(document, '#tabs button', function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tab); });
+    PAGES.forEach(function (p) { $('p-' + p).classList.toggle('hidden', p !== tab); });
+    if (tab === 'cabs' && !state.cabs && !state.cabsLoading) loadCabs();
+    if (!noHash) writeHash();
+  }
+  each(document, '#tabs button', function (b) { b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); }); });
+  var lastHash = '';
+  function writeHash() {
+    var h = '#' + state.tab;
+    if (state.tab === 'cabs' && state.cabSel) h += '/' + encodeURIComponent(state.cabSel);
+    if (state.tab === 'batch' && state.batch) h += '/' + encodeURIComponent(state.batch.batch) + (state.batch.cabinet ? '/' + encodeURIComponent(state.batch.cabinet) : '');
+    lastHash = h;
+    if (location.hash !== h) { try { history.replaceState(null, '', h); } catch (e) {} }
+  }
+  function routeFromHash() {
+    var p = String(location.hash || '').replace(/^#/, '').split('/').map(function (x) { try { return decodeURIComponent(x); } catch (e) { return x; } });
+    var tab = PAGES.indexOf(p[0]) >= 0 ? p[0] : 'cabs';
+    setTab(tab, true);
+    if (tab === 'cabs' && p[1]) openCab(p[1]);
+    if (tab === 'batch' && p[1]) { $('bIn').value = p[1]; loadBatch(p[1], p[2] || ''); }
+  }
+  window.addEventListener('hashchange', function () { if (state.client && location.hash !== lastHash) routeFromHash(); });
+
+  // ---------- 我的柜号 ----------
+  function loadCabs() {
+    state.cabsLoading = true; state.cabsErr = null; renderCabs();
+    return api('clientCabinets').then(function (r) { state.cabs = r || []; }).catch(function (e) { state.cabsErr = e; })
+      .then(function () { state.cabsLoading = false; renderCabs(); });
+  }
+  $('cabsReload').addEventListener('click', function () { loadCabs(); if (state.cabSel) openCab(state.cabSel, true); });
+  function renderCabs() {
+    var el = $('cabList');
+    $('cabsSub').textContent = state.cabs ? t('cabs_sub', state.cabs.length) : '';
+    if (state.cabsLoading && !state.cabs) { el.innerHTML = loadingHtml(); return; }
+    if (state.cabsErr) { el.innerHTML = errHtml(state.cabsErr); return; }
+    var cs = state.cabs || [];
+    if (!cs.length) { el.innerHTML = '<div class="empty">' + esc(t('no_cabs')) + '</div>'; return; }
+    el.innerHTML = '<div class="cabs">' + cs.map(function (c) {
+      var pct = c.batches ? Math.round(c.withAny / c.batches * 100) : 0;
+      return '<button type="button" class="cab' + (c.cabinet === state.cabSel ? ' on' : '') + '" data-c="' + esc(c.cabinet) + '">' +
+        '<b>' + esc(t('cab_t', c.cabinet || '?')) + '</b>' + (c.exceptions ? ' <span class="tag exc">' + esc(t('cab_exc', c.exceptions)) + '</span>' : '') +
+        '<div class="s">' + esc(t('cab_s1', c.batches, c.pieces)) + '</div>' +
+        '<div class="s">' + esc(t('cab_s2', c.withAny, c.batches, c.complete)) + '</div>' +
+        '<div class="s">' + esc(c.lastTime ? t('cab_s3', c.lastTime.slice(0, 16)) : t('cab_never')) + '</div>' +
+        '<div class="prog"><i style="width:' + pct + '%"></i></div></button>';
+    }).join('') + '</div>';
+    each(el, '.cab', function (b) { b.addEventListener('click', function () { openCab(b.getAttribute('data-c')); writeHash(); }); });
+  }
+  function openCab(cab, keep) {
+    state.cabSel = cab; state.cab = null; state.cabErr = null; state.cabLoading = true;
+    if (!keep) { state.cabFilter = 'all'; state.cabCh = ''; state.cabQ = ''; $('cabQ').value = ''; }
+    renderCabs(); renderCab();
+    api('clientCabinet', cab).then(function (r) { if (state.cabSel === cab) state.cab = r; })
+      .catch(function (e) { if (state.cabSel === cab) state.cabErr = e; })
+      .then(function () { if (state.cabSel === cab) { state.cabLoading = false; renderCab(); setTimeout(function () { try { $('cabCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 30); } });
+  }
+  function flags(b) {
+    return { any: SHOT_TYPES.some(function (x) { return b.counts[x] > 0; }),
+             core: CORE_TYPES.every(function (x) { return b.counts[x] > 0; }), exc: b.counts['异常反馈'] > 0 };
+  }
+  function renderCab() {
+    var card = $('cabCard'), body = $('cabBody');
+    if (!state.cabSel) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    var c = state.cab;
+    $('cabTitle').textContent = c ? t('cab_head', c.cabinet, c.batches.length) : t('cab_t', state.cabSel);
+    each(document, '#cabFilters .fchip', function (b) { b.classList.toggle('on', b.getAttribute('data-f') === state.cabFilter); });
+    $('cabExport').disabled = !c;
+    if (state.cabLoading) { body.innerHTML = loadingHtml(); return; }
+    if (state.cabErr || !c) { body.innerHTML = state.cabErr ? errHtml(state.cabErr) : ''; return; }
+    var chs = {}; c.batches.forEach(function (b) { if (b.channel) chs[b.channel] = 1; });
+    $('cabCh').innerHTML = '<option value="">' + esc(t('all_ch')) + '</option>' + Object.keys(chs).map(function (k) {
+      return '<option value="' + esc(k) + '"' + (k === state.cabCh ? ' selected' : '') + '>' + esc(chLabel(k)) + '</option>'; }).join('');
+    var q = state.cabQ.toLowerCase();
+    var rows = c.batches.filter(function (b) {
+      var f = flags(b);
+      if (state.cabFilter === 'done' && !f.core) return false;
+      if (state.cabFilter === 'missing' && f.core) return false;
+      if (state.cabFilter === 'exc' && !f.exc) return false;
+      if (state.cabCh && b.channel !== state.cabCh) return false;
+      if (q && (b.batch + ' ' + b.recipient + ' ' + b.city + ' ' + b.attribute).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    if (!rows.length) { body.innerHTML = '<div class="empty">' + esc(t('no_rows')) + '</div>'; return; }
+    body.innerHTML = '<div class="tw"><table><thead><tr><th>' + [t('c_batch'), t('c_channel'), t('c_attr'), t('c_recipient'), t('c_city')].map(esc).join('</th><th>') +
+      '</th><th class="c">' + esc(t('c_pieces')) + '</th>' + SHOT_TYPES.map(function (x) { return '<th class="c">' + esc(stLabel(x)) + '</th>'; }).join('') +
+      '<th class="c">' + esc(t('c_files')) + '</th><th>' + esc(t('c_last')) + '</th></tr></thead><tbody>' +
+      rows.map(function (b) {
+        return '<tr class="clk" data-b="' + esc(b.batch) + '"><td><b>' + esc(b.batch) + '</b></td><td>' + esc(chLabel(b.channel)) + '</td><td>' + esc(b.attribute) +
+          '</td><td class="wrap">' + esc(b.recipient) + '</td><td>' + esc(b.city) + '</td><td class="c">' + esc(b.pieces) + '</td>' +
+          SHOT_TYPES.map(function (x) {
+            var n = b.counts[x] || 0;
+            return '<td class="c">' + (n ? '<span class="' + (x === '异常反馈' ? 'exc' : 'yes') + '">✔ ' + n + '</span>' : '<span class="no">—</span>') + '</td>';
+          }).join('') + '<td class="c">' + (b.files || 0) + '</td><td>' + esc((b.lastTime || '').slice(0, 16)) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    each(body, 'tr.clk', function (tr) { tr.addEventListener('click', function () { gotoBatch(tr.getAttribute('data-b'), state.cabSel); }); });
+  }
+  function gotoBatch(bno, cab) {
+    $('bIn').value = bno; state.scanInfo = null; renderScanInfo();
+    setTab('batch', true); loadBatch(bno, cab || '');
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  each(document, '#cabFilters .fchip', function (b) { b.addEventListener('click', function () { state.cabFilter = b.getAttribute('data-f'); renderCab(); }); });
+  $('cabCh').addEventListener('change', function () { state.cabCh = this.value; renderCab(); });
+  $('cabQ').addEventListener('input', function () { state.cabQ = this.value.trim(); renderCab(); });
+  $('cabExport').addEventListener('click', function () {
+    var c = state.cab; if (!c) return;
+    var btn = this; btn.disabled = true;
+    api('clientRecords', { cabinet: c.cabinet }).then(function (r) {
+      var sum = [[t('c_cabinet'), t('c_batch'), t('c_channel'), t('c_attr'), t('c_recipient'), t('c_city'), t('c_pieces')]
+        .concat(SHOT_TYPES.map(stLabel)).concat([t('c_files'), t('c_last')])].concat(c.batches.map(function (b) {
+        return [c.cabinet, b.batch, b.channel, b.attribute, b.recipient, b.city, numOr(b.pieces)].concat(SHOT_TYPES.map(function (x) { return b.counts[x] || 0; }))
+          .concat([b.files || 0, b.lastTime || '']);
+      }));
+      return exportXlsx('dangdang_' + c.cabinet + '柜_' + today() + '.xlsx', [
+        { name: t('x_sheet_sum'), aoa: sum }, { name: t('x_sheet_rec'), aoa: recordsAoa(r.records), links: true }]);
+    }).catch(function (e) { toast('net_err', errMsg(e)); }).then(function () { btn.disabled = false; });
+  });
+
+  // ---------- 批次查询 ----------
+  function loadBatch(bno, cab) {
+    bno = String(bno || '').trim();
+    if (!bno) { toast('v_batch'); return; }
+    var my = (state.bSeq = (state.bSeq || 0) + 1);
+    state.batchLoading = true; state.batchErr = null; state.batch = null; state.bType = ''; renderBatch();
+    api('clientBatch', bno, cab || '').then(function (r) { if (my === state.bSeq) { state.batch = r; writeHash(); } })
+      .catch(function (e) { if (my === state.bSeq) state.batchErr = e; })
+      .then(function () { if (my === state.bSeq) { state.batchLoading = false; renderBatch(); } });
+  }
+  function manualLookup() { state.scanInfo = null; renderScanInfo(); loadBatch($('bIn').value, ''); }
+  $('bGo').addEventListener('click', manualLookup);
+  $('bIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); manualLookup(); } });
+  function infoGrid(m) {
+    var f = function (k, v) { return '<div><span>' + esc(t(k)) + '</span><b>' + esc(v || '-') + '</b></div>'; };
+    return '<div class="g">' + f('c_cabinet', m.cabinet ? t('cab_t', m.cabinet) : '') + f('c_channel', chLabel(m.channel)) + f('c_attr', m.attribute) +
+      f('c_recipient', m.recipient) + f('c_city', m.city) + f('c_pieces', m.pieces) + '</div>';
+  }
+  function renderBatch() {
+    var info = $('bInfo'), card = $('bTimelineCard');
+    if (state.batchLoading) { info.innerHTML = loadingHtml(); card.classList.add('hidden'); return; }
+    if (state.batchErr) { info.innerHTML = errHtml(state.batchErr); card.classList.add('hidden'); return; }
+    var r = state.batch;
+    if (!r) { info.innerHTML = ''; card.classList.add('hidden'); return; }
+    var ms = r.matches || [], recs = r.records || [], html = '';
+    if (!ms.length && !recs.length) { info.innerHTML = '<div class="bcard miss">' + esc(t('b_miss')) + '</div>'; card.classList.add('hidden'); return; }
+    if (ms.length === 1) {
+      html = '<div class="bcard"><div style="font-weight:700;margin-bottom:6px">' + esc(t('b_found')) + ' · ' + esc(r.batch) + '</div>' + infoGrid(ms[0]) + '</div>';
+    } else if (ms.length > 1) {
+      html = '<div class="bcard"><div style="font-weight:700">' + esc(t('b_multi')) + '</div>' + ms.map(function (m) {
+        return '<button type="button" class="btn sm pick" data-c="' + esc(m.cabinet) + '">' + esc(t('cab_t', m.cabinet) + ' · ' + chLabel(m.channel) + ' · ' + m.recipient + ' · ' + t('c_pieces') + ' ' + m.pieces) + '</button>';
+      }).join('') + '</div>';
+    }
+    var counts = {}; SHOT_TYPES.forEach(function (x) { counts[x] = 0; }); recs.forEach(function (x) { if (counts[x.type] != null) counts[x.type]++; });
+    var miss = CORE_TYPES.filter(function (x) { return !counts[x]; });
+    html += '<div class="counts">' + SHOT_TYPES.map(function (x) {
+      return '<span class="tag ' + (counts[x] ? ST_CLASS[x] : '') + '">' + esc(stLabel(x)) + ' ' + counts[x] + '</span>'; }).join('') +
+      (recs.length ? (miss.length ? '<span class="tag warn">' + esc(t('missing_types', miss.map(stLabel).join(' / '))) + '</span>'
+                                  : '<span class="tag ok">✔ ' + esc(t('all_types_ok')) + '</span>') : '') + '</div>';
+    info.innerHTML = html;
+    each(info, '.pick', function (b) { b.addEventListener('click', function () { loadBatch(r.batch, b.getAttribute('data-c')); }); });
+
+    card.classList.remove('hidden');
+    $('bCount').textContent = ' · ' + t('b_count', recs.length);
+    $('bExport').disabled = !recs.length;
+    $('bTypeF').innerHTML = recs.length ? [''].concat(SHOT_TYPES).map(function (x) {
+      if (x && !counts[x]) return '';
+      return '<button type="button" class="fchip' + (state.bType === x ? ' on' : '') + '" data-t="' + esc(x) + '">' +
+        esc(x ? stLabel(x) + ' ' + counts[x] : t('f_all') + ' ' + recs.length) + '</button>';
+    }).join('') : '';
+    each($('bTypeF'), '.fchip', function (b) { b.addEventListener('click', function () { state.bType = b.getAttribute('data-t'); renderBatch(); }); });
+    if (!recs.length) { $('bTimeline').innerHTML = '<div class="empty">' + esc(t('b_none')) + '</div>'; return; }
+    var shown = recs.filter(function (x) { return !state.bType || x.type === state.bType; });
+    var out = '', day = null;
+    shown.forEach(function (x, i) {
+      var d = (x.time || '').slice(0, 10);
+      if (d !== day) { if (day !== null) out += '</div>'; day = d; out += '<div class="tl-day">' + esc(d || '-') + '</div><div class="tl">'; }
+      out += itemHtml(x, i);
+    });
+    if (day !== null) out += '</div>';
+    $('bTimeline').innerHTML = out;
+    bindThumbs($('bTimeline'), shown);
+  }
+  function dlUrl(x) { return x.fileId ? 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(x.fileId) : (x.fileUrl || ''); }
+  function itemHtml(x, i) {
+    return '<div class="it' + (x.type === '异常反馈' ? ' it-exc' : '') + '">' + thumbHtml(x, i) +
+      '<div class="bd"><div class="l1"><span class="tag ' + (ST_CLASS[x.type] || '') + '">' + esc(stLabel(x.type)) + '</span><span class="muted">' + esc((x.time || '').slice(11, 19)) + '</span></div>' +
+      '<div><span class="muted">' + esc(t('c_operator')) + ': </span>' + esc(x.operator || '-') + (x.cabinet ? ' · <span class="muted">' + esc(t('cab_t', x.cabinet)) + '</span>' : '') + '</div>' +
+      (x.note ? '<div class="note"><span class="muted">' + esc(t('c_note')) + ': </span>' + esc(x.note) + '</div>' : '') +
+      '<div class="nm" title="' + esc(x.fileName) + '">' + esc(x.fileName) + (x.sizeMB ? ' · ' + esc(x.sizeMB) + 'MB' : '') + '</div>' +
+      '<div class="lk"><a href="#" class="op" data-i="' + i + '">' + esc(t('open')) + '</a>' +
+      (dlUrl(x) ? '<a href="' + esc(dlUrl(x)) + '" target="_blank" rel="noopener">' + esc(t('download')) + '</a>' : '') + '</div></div></div>';
+  }
+  // 缩略图：Drive 缩略图地址，懒加载（滚动到附近才加载）；视频只在点开时加载
+  function thumbUrl(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + (w || 400); }
+  function thumbHtml(x, i) {
+    return '<div class="th thw" data-i="' + i + '">' +
+      (x.fileId ? '<img loading="lazy" decoding="async" alt="" referrerpolicy="no-referrer" src="' + esc(thumbUrl(x.fileId, 480)) + '">' : '') +
+      '<div class="ph' + (x.kind === 'video' ? ' v' : '') + (x.fileId ? ' hidden' : '') + '">' + (x.kind === 'video' ? '' : '🖼') + '<small>' + esc(t('thumb_fail')) + '</small></div>' +
+      (x.kind === 'video' ? '<span class="play">▶</span>' : '') + '</div>';
+  }
+  function bindThumbs(root, list) {
+    each(root, '.thw', function (el) {
+      var img = el.querySelector('img'), ph = el.querySelector('.ph');
+      if (img) img.addEventListener('error', function () { img.remove(); if (ph) ph.classList.remove('hidden'); });
+      el.addEventListener('click', function () { openLb(list, Number(el.getAttribute('data-i'))); });
+    });
+    each(root, 'a.op', function (a) { a.addEventListener('click', function (e) { e.preventDefault(); openLb(list, Number(a.getAttribute('data-i'))); }); });
+  }
+
+  // ---------- 灯箱：图片看大图，视频用 Drive 预览播放，可下载原文件 ----------
+  var lb = { list: [], i: 0 };
+  function openLb(list, i) { lb.list = list; lb.i = i; $('lb').classList.remove('hidden'); renderLb(); }
+  function closeLb() { $('lb').classList.add('hidden'); $('lbStage').innerHTML = ''; }
+  function renderLb() {
+    var x = lb.list[lb.i]; if (!x) return;
+    $('lbT').textContent = (lb.i + 1) + ' / ' + lb.list.length + ' · ' + x.batch + ' · ' + stLabel(x.type) + ' · ' + x.time;
+    $('lbOpen').textContent = t('open_drive'); $('lbOpen').href = x.fileUrl || '#';
+    $('lbDl').textContent = '⬇ ' + t('download'); $('lbDl').href = dlUrl(x) || '#';
+    var st = $('lbStage'), nav = lb.list.length > 1 ? '<button type="button" class="nav p" id="lbP">‹</button><button type="button" class="nav n" id="lbN">›</button>' : '';
+    if (!x.fileId) st.innerHTML = '<div style="color:#fff">' + esc(t('thumb_fail')) + '</div>' + nav;
+    else if (x.kind === 'video') st.innerHTML = '<iframe src="https://drive.google.com/file/d/' + encodeURIComponent(x.fileId) + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>' + nav;
+    else st.innerHTML = '<img alt="" referrerpolicy="no-referrer" src="' + esc(thumbUrl(x.fileId, 2000)) + '">' + nav;
+    var im = st.querySelector('img');
+    if (im) im.addEventListener('error', function () {
+      var a = document.createElement('a'); a.style.color = '#8ab4f8'; a.target = '_blank'; a.rel = 'noopener'; a.href = x.fileUrl || '#';
+      a.textContent = t('thumb_fail') + ' · ' + t('thumb_fail2'); im.replaceWith(a);
+    });
+    if ($('lbP')) $('lbP').onclick = function () { lb.i = (lb.i - 1 + lb.list.length) % lb.list.length; renderLb(); };
+    if ($('lbN')) $('lbN').onclick = function () { lb.i = (lb.i + 1) % lb.list.length; renderLb(); };
+    $('lbCap').textContent = [t('c_operator') + ': ' + (x.operator || '-'), x.note ? t('c_note') + ': ' + x.note : '', x.fileName].filter(Boolean).join('  ·  ');
+  }
+  $('lbX').addEventListener('click', closeLb);
+  document.addEventListener('keydown', function (e) {
+    if ($('lb').classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLb();
+    if (e.key === 'ArrowLeft' && $('lbP')) $('lbP').click();
+    if (e.key === 'ArrowRight' && $('lbN')) $('lbN').click();
+  });
+  $('bExport').addEventListener('click', function () {
+    var r = state.batch; if (!r || !r.records.length) return;
+    exportXlsx('dangdang_' + r.batch + '_' + today() + '.xlsx', [{ name: t('x_sheet_rec'), aoa: recordsAoa(r.records), links: true }]);
+  });
+
+  // ---------- 扫码（与上传页相同：顶层新窗口实时扫码，结果自动去掉最后 4 位） ----------
+  var scanWin = null, scanNonce = '';
+  function useScanned(raw) {
+    raw = String(raw || '').trim();
+    if (!raw) { toast('scan_empty'); return; }
+    var val = raw.length > 4 ? raw.slice(0, -4) : raw;
+    state.scanInfo = { raw: raw, val: val, short: raw.length <= 4 };
+    renderScanInfo();
+    $('bIn').value = val.slice(0, 80);
+    toast('scan_toast', val);
+    setTab('batch', true);
+    loadBatch(val, '');
+  }
+  function renderScanInfo() {
+    var info = $('scanInfo'), si = state.scanInfo;
+    if (!si) { info.className = 'scaninfo hidden'; info.innerHTML = ''; return; }
+    var b = function (x) { return '<b>' + esc(x) + '</b>'; };
+    if (si.short) { info.className = 'scaninfo warn'; info.innerHTML = esc(t('scan_short', '\u0001', '\u0002')).replace('\u0001', String(si.raw.length)).replace('\u0002', b(si.raw)); }
+    else { info.className = 'scaninfo'; info.innerHTML = esc(t('scan_raw', '\u0001', '\u0002')).replace('\u0001', b(si.raw)).replace('\u0002', b(si.val)); }
+  }
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.type !== 'dd-scan' || !scanNonce || d.nonce !== scanNonce) return;
+    if (scanWin && e.source && e.source !== scanWin) return;
+    scanNonce = ''; scanWin = null;
+    try { window.focus(); } catch (x) {}
+    useScanned(d.value);
+  });
+
+  // ===== 以下扫码窗口代码与上传页 Index.html v7 完全相同（构建时自动复制） =====
+  function scannerPageHtml(nonce) {
+    var keys = ['sw_title', 'sw_opening', 'sw_aim', 'sw_switch', 'sw_torch', 'cancel', 'sw_done', 'sw_lib',
+                'sw_err', 'sw_e_NotAllowedError', 'sw_e_NotFoundError', 'sw_e_NotReadableError',
+                'sw_e_OverconstrainedError', 'sw_e_SecurityError', 'sw_e_other', 'sw_retry', 'sw_back',
+                'sw_engine', 'sw_eng_native', 'sw_eng_wasm', 'sw_eng_loading', 'sw_zoom', 'sw_hint', 'sw_focus'];
+    var L = {};
+    keys.forEach(function (k) { L[k] = t(k); });
+    var force = '';
+    try { force = localStorage.getItem('dd_scan_engine') || ''; } catch (e) {}
+    var cfg = { nonce: nonce, zx: ZXING_BASES, L: L, force: force };
+    // 写入新窗口的 JSON 需要转义 "<"，防止提前结束 script 标签
+    var cfgJson = JSON.stringify(cfg).replace(/</g, '\\u003c');
+    return '<!DOCTYPE html><html lang="' + (lang === 'en' ? 'en' : 'zh-CN') + '"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">' +
+      '<title>' + esc(L.sw_title) + '</title><style>' +
+      '*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}' +
+      '#wrap{position:fixed;inset:0;display:flex;flex-direction:column}' +
+      '#top{padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));text-align:center;font-size:15px;line-height:1.5;min-height:44px}' +
+      '#stage{flex:1;position:relative;overflow:hidden;min-height:200px;touch-action:none}' +
+      '#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}' +
+      '#box{position:absolute;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none;transition:border-color .15s}' +
+      '#box.ok{border-color:#34a853}#box i{position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(234,67,53,.85)}' +
+      '#hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:13px;color:#ddd;pointer-events:none;padding:0 12px}' +
+      '#ring{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid #fbbc04;border-radius:50%;display:none;pointer-events:none}' +
+      '#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:16px;line-height:1.6;background:#000;z-index:5}' +
+      '#msg small{display:block;color:#aaa;font-size:13px;margin-top:8px;word-break:break-all}' +
+      '#zoomRow{display:flex;align-items:center;gap:10px;padding:6px 16px 0}#zoomRow[hidden]{display:none}#zoomRow input{flex:1}#zv{min-width:44px;text-align:right;font-size:14px}' +
+      '#eng{font-size:11px;color:#9aa0a6;text-align:center;padding:4px 8px 0;min-height:18px;word-break:break-all}' +
+      '#bot{display:flex;gap:10px;padding:10px 14px 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}' +
+      '#bot button{flex:1;font-size:16px;padding:14px 8px;border-radius:10px;border:0;background:#3c4043;color:#fff}' +
+      '#bot button.pri{background:#1a73e8}#bot button.on{background:#f9ab00;color:#000}#bot button[hidden]{display:none}' +
+      '</style></head><body><div id="wrap"><div id="top"></div>' +
+      '<div id="stage"><video id="vid" playsinline muted autoplay></video><div id="box"><i></i></div><div id="ring"></div><div id="hint"></div><div id="msg"></div></div>' +
+      '<div id="zoomRow" hidden><span id="zl"></span><input id="zoom" type="range"><span id="zv"></span></div>' +
+      '<div id="eng"></div>' +
+      '<div id="bot"><button id="bCancel"></button><button id="bTorch" hidden></button><button id="bSwitch" class="pri" hidden></button></div></div>' +
+      '<script>window.__DD_CFG=' + cfgJson + ';<\/script>' +
+      '<script>(' + scannerMain.toString() + ')();<\/script></body></html>';
+  }
+
+  // 这个函数会被转成字符串写进扫码窗口运行（不要引用外部变量）
+  // 识别引擎：① 浏览器原生 BarcodeDetector（安卓 Chrome，基于 ML Kit，最快）；② zxing-cpp WebAssembly（iPhone / 电脑 / 原生不可用时）
+  function scannerMain() {
+    var C = window.__DD_CFG, L = C.L;
+    var $ = function (id) { return document.getElementById(id); };
+    var NATIVE_FMTS = ['code_128', 'code_39', 'code_93', 'codabar', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'qr_code', 'data_matrix'];
+    var ZX_FMTS = ['Code128', 'Code39', 'Code93', 'Codabar', 'EAN13', 'EAN8', 'UPCA', 'UPCE', 'ITF', 'QRCode', 'DataMatrix'];
+    var MATRIX = /qr|matrix|aztec|pdf/i;
+    var stream = null, track = null, cams = [], camId = '', done = false, running = false, loopTimer = 0, gen = 0;
+    var native = null, nativeFmts = [], zx = null, zxBase = '', engine = '', frameNo = 0, fpsT = 0, fpsN = 0, fps = 0;
+    var last = { text: '', at: 0 }, torchOn = false, audioCtx = null;
+    var vid = $('vid'), cvs = document.createElement('canvas'), ctx = cvs.getContext('2d', { willReadFrequently: true });
+
+    $('bCancel').textContent = L.cancel; $('bSwitch').textContent = L.sw_switch; $('bTorch').textContent = L.sw_torch;
+    $('zl').textContent = L.sw_zoom; $('hint').textContent = L.sw_hint;
+    function top(s) { $('top').textContent = s; }
+    function msg(html) { var m = $('msg'); if (!html) { m.style.display = 'none'; m.innerHTML = ''; return; } m.innerHTML = html; m.style.display = 'flex'; }
+    function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    // ---------- 识别引擎加载 ----------
+    function initNative() {
+      if (!('BarcodeDetector' in window) || C.force === 'wasm') return Promise.resolve(false);
+      return Promise.resolve(window.BarcodeDetector.getSupportedFormats ? window.BarcodeDetector.getSupportedFormats() : [])
+        .then(function (sup) {
+          nativeFmts = NATIVE_FMTS.filter(function (f) { return sup.indexOf(f) >= 0; });
+          if (nativeFmts.indexOf('code_128') < 0) return false;          // 不支持 Code128 的原生实现不用
+          native = new window.BarcodeDetector({ formats: nativeFmts });
+          return true;
+        }).catch(function () { return false; });
+    }
+    function loadScript(url) {
+      return new Promise(function (res, rej) {
+        var s = document.createElement('script'); s.src = url; s.async = true;
+        s.onload = function () { window.ZXingWASM ? res() : rej(new Error('lib')); };
+        s.onerror = function () { s.remove(); rej(new Error('lib')); };
+        document.head.appendChild(s);
+      });
+    }
+    function initZx() {
+      if (zx) return Promise.resolve(true);
+      if (C.force === 'native') return Promise.resolve(false);
+      return C.zx.reduce(function (p, base) {
+        return p.catch(function () {
+          return (window.ZXingWASM ? Promise.resolve() : loadScript(base + 'dist/iife/reader/index.js')).then(function () {
+            var Z = window.ZXingWASM;
+            return Promise.resolve(Z.prepareZXingModule({
+              overrides: { locateFile: function (path, prefix) { return /\.wasm$/.test(path) ? base + 'dist/reader/' + path : prefix + path; } },
+              fireImmediately: true
+            })).then(function () { zx = Z; zxBase = base; return true; });
+          });
+        });
+      }, Promise.reject(new Error('start'))).catch(function () { return false; });
+    }
+    function engineLabel() {
+      var s = track && track.getSettings ? track.getSettings() : {};
+      var name = engine === 'native' ? L.sw_eng_native : engine === 'wasm' ? L.sw_eng_wasm : L.sw_eng_loading;
+      $('eng').textContent = L.sw_engine + name + (s.width ? ' · ' + s.width + '×' + s.height : '') + (fps ? ' · ' + fps + 'fps' : '') +
+        (track && track.label ? ' · ' + track.label : '');
+    }
+
+    // ---------- 摄像头 ----------
+    function errName(e) {
+      if (!e) return 'Error';
+      if (e.name && e.name !== 'Error') return e.name;
+      var m = String(e.message || e).match(/(NotAllowedError|NotFoundError|NotReadableError|OverconstrainedError|SecurityError|AbortError)/);
+      return m ? m[1] : 'Error';
+    }
+    function showErr(e) {
+      var n = errName(e), hint = L['sw_e_' + n] || L.sw_e_other;
+      top('');
+      msg('<div>' + escH(L.sw_err) + '<br>' + escH(hint) + '<small>' + escH(n + ': ' + String((e && e.message) || e || '')) + '</small>' +
+          '<div style="margin-top:16px"><button id="bRetry" style="font-size:16px;padding:12px 24px;border-radius:10px;border:0;background:#1a73e8;color:#fff">' + escH(L.sw_retry) + '</button></div></div>');
+      $('bRetry').onclick = function () { msg(''); startCam(camId); };
+    }
+    function stopCam() {
+      gen++; running = false; clearTimeout(loopTimer);
+      if (stream) stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      stream = null; track = null;
+    }
+    // 安卓多摄手机上 facingMode 可能选到超广角（不能对焦），优先主摄 "camera2 0" / 带 back 且非 wide/tele 的镜头
+    function pickBack(list) {
+      var back = list.filter(function (d) { return /back|rear|environment|后|背/i.test(d.label || ''); });
+      if (!back.length) return '';
+      var main = back.filter(function (d) { return /camera2? 0\b|camera 0\b/i.test(d.label); })[0] ||
+                 back.filter(function (d) { return !/wide|ultra|tele|超广|广角|长焦|depth|macro|微距/i.test(d.label); })[0] || back[0];
+      return main.deviceId;
+    }
+    function listCams() {
+      return navigator.mediaDevices.enumerateDevices().then(function (ds) {
+        cams = ds.filter(function (d) { return d.kind === 'videoinput'; });
+        $('bSwitch').hidden = cams.length < 2;
+      }).catch(function () {});
+    }
+    function open(deviceId) {
+      var v = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
+      if (deviceId) v.deviceId = { exact: deviceId }; else v.facingMode = { ideal: 'environment' };
+      return navigator.mediaDevices.getUserMedia({ video: v, audio: false });
+    }
+    function startCam(deviceId) {
+      stopCam(); msg(''); top(L.sw_opening);
+      var myGen = gen, saved = '';
+      try { saved = localStorage.getItem('dd_scan_cam') || ''; } catch (e) {}
+      var want = deviceId || saved || '';
+      return open(want).catch(function (e) {
+        if (!want || errName(e) === 'NotAllowedError') throw e;
+        return open('');                                   // 记住的摄像头不可用时，回到默认后置
+      }).then(function (s) {
+        if (myGen !== gen) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        stream = s; track = s.getVideoTracks()[0];
+        var cur = track.getSettings ? track.getSettings().deviceId : '';
+        // 第一次（未指定、未记住）时，若默认选到的不是主摄，换到主摄
+        return listCams().then(function () {
+          if (deviceId || saved) return;
+          var best = pickBack(cams);
+          if (best && cur && best !== cur) {
+            s.getTracks().forEach(function (t) { t.stop(); });
+            return open(best).then(function (s2) { stream = s2; track = s2.getVideoTracks()[0]; }, function () {
+              return open('').then(function (s3) { stream = s3; track = s3.getVideoTracks()[0]; });
+            });
+          }
+        });
+      }).then(function () {
+        if (!stream || myGen !== gen) return;
+        camId = (track.getSettings && track.getSettings().deviceId) || '';
+        vid.srcObject = stream; vid.muted = true; vid.setAttribute('playsinline', '');
+        return vid.play().catch(function () {}).then(function () {
+          return new Promise(function (r) { if (vid.videoWidth) r(); else vid.onloadedmetadata = function () { r(); }; setTimeout(r, 1500); });
+        });
+      }).then(function () {
+        if (!stream || myGen !== gen) return;
+        tuneTrack(); layoutBox(); top(L.sw_aim); engineLabel();
+        running = true; loop(myGen);
+      }).catch(function (e) { if (myGen === gen) showErr(e); });
+    }
+    function caps() { try { return track && track.getCapabilities ? track.getCapabilities() : {}; } catch (e) { return {}; } }
+    function apply(c) { try { return track.applyConstraints({ advanced: [c] }).catch(function () {}); } catch (e) { return Promise.resolve(); } }
+    function tuneTrack() {
+      var c = caps();
+      if (c.focusMode && c.focusMode.indexOf('continuous') >= 0) apply({ focusMode: 'continuous' });
+      if (c.exposureMode && c.exposureMode.indexOf('continuous') >= 0) apply({ exposureMode: 'continuous' });
+      if (c.whiteBalanceMode && c.whiteBalanceMode.indexOf('continuous') >= 0) apply({ whiteBalanceMode: 'continuous' });
+      // 变焦：默认放大到 1.5 倍左右（条码离得稍远也能看清），可用滑杆调整
+      var zr = $('zoomRow'), z = $('zoom');
+      if (c.zoom && c.zoom.max > c.zoom.min) {
+        var max = Math.min(c.zoom.max, 8), step = c.zoom.step || 0.1;
+        z.min = c.zoom.min; z.max = max; z.step = step;
+        var def = Math.max(c.zoom.min, Math.min(max, 1.5));
+        z.value = def; $('zv').textContent = (+def).toFixed(1) + '×'; zr.hidden = false;
+        apply({ zoom: def });
+        z.oninput = function () { $('zv').textContent = (+z.value).toFixed(1) + '×'; apply({ zoom: +z.value }); };
+      } else zr.hidden = true;
+      var b = $('bTorch'); torchOn = false; b.classList.remove('on');
+      b.hidden = !c.torch;
+      b.onclick = function () { torchOn = !torchOn; b.classList.toggle('on', torchOn); apply({ torch: torchOn }); };
+    }
+    // 点画面对焦（支持时）
+    $('stage').addEventListener('click', function (ev) {
+      unlockAudio();
+      if (!track) return;
+      var c = caps(), r = $('stage').getBoundingClientRect(), ring = $('ring');
+      ring.style.left = (ev.clientX - r.left) + 'px'; ring.style.top = (ev.clientY - r.top) + 'px'; ring.style.display = 'block';
+      setTimeout(function () { ring.style.display = 'none'; }, 700);
+      var p = mapToVideo((ev.clientX - r.left), (ev.clientY - r.top));
+      var adv = {};
+      if (c.pointsOfInterest || ('pointsOfInterest' in (track.getSettings ? track.getSettings() : {}))) adv.pointsOfInterest = [{ x: p.x / (vid.videoWidth || 1), y: p.y / (vid.videoHeight || 1) }];
+      if (c.focusMode && c.focusMode.indexOf('single-shot') >= 0) adv.focusMode = 'single-shot';
+      else if (c.focusMode && c.focusMode.indexOf('manual') < 0 && c.focusMode.indexOf('continuous') >= 0) adv.focusMode = 'continuous';
+      if (Object.keys(adv).length) apply(adv).then(function () {
+        if (adv.focusMode === 'single-shot') setTimeout(function () { apply({ focusMode: 'continuous' }); }, 1500);
+      });
+    });
+
+    // ---------- 取景框与坐标换算（video 使用 object-fit:cover） ----------
+    var boxCss = { x: 0, y: 0, w: 0, h: 0 };
+    function layoutBox() {
+      var st = $('stage'), W = st.clientWidth, H = st.clientHeight;
+      var w = Math.round(W * 0.88), h = Math.round(Math.min(H * 0.42, w * 0.62));
+      h = Math.max(h, 110);
+      boxCss = { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h };
+      var b = $('box'); b.style.left = boxCss.x + 'px'; b.style.top = boxCss.y + 'px'; b.style.width = w + 'px'; b.style.height = h + 'px';
+    }
+    window.addEventListener('resize', layoutBox);
+    function coverMap() {
+      var st = $('stage'), W = st.clientWidth, H = st.clientHeight, vw = vid.videoWidth, vh = vid.videoHeight;
+      var s = Math.max(W / vw, H / vh);
+      return { s: s, ox: (W - vw * s) / 2, oy: (H - vh * s) / 2, vw: vw, vh: vh };
+    }
+    function mapToVideo(x, y) { var m = coverMap(); return { x: (x - m.ox) / m.s, y: (y - m.oy) / m.s }; }
+    // 取景框对应的视频区域（四周多留 12%），裁剪后识别更快更准
+    function cropRect() {
+      var m = coverMap(), padX = boxCss.w * 0.12, padY = boxCss.h * 0.25;
+      var x = (boxCss.x - padX - m.ox) / m.s, y = (boxCss.y - padY - m.oy) / m.s;
+      var w = (boxCss.w + padX * 2) / m.s, h = (boxCss.h + padY * 2) / m.s;
+      x = Math.max(0, x); y = Math.max(0, y); w = Math.min(m.vw - x, w); h = Math.min(m.vh - y, h);
+      return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
+    }
+    function grab(rect, maxW) {
+      var sc = Math.min(1, maxW / rect.w);
+      var w = Math.max(1, Math.round(rect.w * sc)), h = Math.max(1, Math.round(rect.h * sc));
+      if (cvs.width !== w) cvs.width = w; if (cvs.height !== h) cvs.height = h;
+      ctx.drawImage(vid, rect.x, rect.y, rect.w, rect.h, 0, 0, w, h);
+      return cvs;
+    }
+
+    // ---------- 识别循环（约 12~15 帧/秒；每 4 帧扫一次全画面） ----------
+    var zxOpts = { formats: ZX_FMTS, tryHarder: true, tryRotate: true, tryInvert: false, tryDownscale: true, maxNumberOfSymbols: 1 };
+    function decodeNative(full) {
+      var src = full ? vid : grab(cropRect(), 1600);
+      return native.detect(src).then(function (rs) {
+        for (var i = 0; i < rs.length; i++) if (rs[i].rawValue) return { text: rs[i].rawValue, fmt: rs[i].format };
+        return null;
+      });
+    }
+    function decodeZx(full) {
+      var c = full ? grab({ x: 0, y: 0, w: vid.videoWidth, h: vid.videoHeight }, 1280) : grab(cropRect(), 1280);
+      var img = ctx.getImageData(0, 0, c.width, c.height);
+      return zx.readBarcodes(img, zxOpts).then(function (rs) {
+        for (var i = 0; i < rs.length; i++) if (rs[i].isValid !== false && rs[i].text) return { text: rs[i].text, fmt: rs[i].format };
+        return null;
+      });
+    }
+    function loop(myGen) {
+      if (!running || myGen !== gen || done) return;
+      var t0 = performance.now();
+      if (!vid.videoWidth || vid.readyState < 2) { loopTimer = setTimeout(function () { loop(myGen); }, 80); return; }
+      frameNo++;
+      var full = frameNo % 4 === 0, p;
+      if (engine === 'native') p = decodeNative(full).then(function (r) {
+        // 原生没读到时，每 3 帧用 zxing 补一次（若已加载）
+        if (!r && zx && frameNo % 3 === 0) return decodeZx(full);
+        return r;
+      });
+      else if (engine === 'wasm') p = decodeZx(full);
+      else p = Promise.resolve(null);
+      p.catch(function () { return null; }).then(function (r) {
+        if (myGen !== gen) return;
+        fpsN++; var now = performance.now();
+        if (now - fpsT > 1000) { fps = Math.round(fpsN * 1000 / (now - fpsT)); fpsN = 0; fpsT = now; engineLabel(); }
+        if (r && r.text) hit(String(r.text).trim(), String(r.fmt || ''));
+        var wait = Math.max(0, 70 - (performance.now() - t0));
+        loopTimer = setTimeout(function () { loop(myGen); }, wait);
+      });
+    }
+    // 防误读：一维码需要连续两次读到相同内容（1.5 秒内）；二维码自带纠错，一次即可
+    function hit(text, fmt) {
+      if (!text || done) return;
+      var now = Date.now();
+      if (MATRIX.test(fmt) || (last.text === text && now - last.at < 1500)) return success(text);
+      last = { text: text, at: now };
+      $('box').classList.add('ok'); setTimeout(function () { if (!done) $('box').classList.remove('ok'); }, 250);
+    }
+    function unlockAudio() {
+      try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+    }
+    function beep() {
+      try {
+        unlockAudio(); if (!audioCtx) return;
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 1800; g.gain.value = 0.15;
+        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
+    }
+    function success(text) {
+      done = true; running = false;
+      $('box').classList.add('ok');
+      try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+      beep();
+      top('✔ ' + text);
+      try { if (camId) localStorage.setItem('dd_scan_cam', camId); } catch (e) {}
+      var sent = false;
+      try { if (window.opener && !window.opener.closed) { window.opener.postMessage({ type: 'dd-scan', nonce: C.nonce, value: String(text) }, '*'); sent = true; } } catch (e) {}
+      setTimeout(function () {
+        stopCam();
+        if (sent) { try { window.opener.focus(); } catch (e) {} window.close(); }
+        setTimeout(function () { msg('<div>✔ ' + escH(text) + '<br>' + escH(sent ? L.sw_done : L.sw_back) + '</div>'); }, 300);
+      }, 250);
+    }
+
+    // ---------- 按钮 ----------
+    $('bCancel').onclick = function () { done = true; stopCam(); window.close(); };
+    $('bSwitch').onclick = function () {
+      unlockAudio();
+      if (cams.length < 2) return;
+      var i = -1;
+      for (var k = 0; k < cams.length; k++) if (cams[k].deviceId === camId) i = k;
+      var next = cams[(i + 1) % cams.length].deviceId;
+      try { localStorage.setItem('dd_scan_cam', next); } catch (e) {}
+      startCam(next);
+    };
+    // 点引擎文字可在两个引擎间切换（排查问题用）
+    $('eng').addEventListener('click', function () {
+      if (engine === 'native' && zx) engine = 'wasm';
+      else if (engine === 'wasm' && native) engine = 'native';
+      engineLabel();
+    });
+    window.addEventListener('pagehide', stopCam);
+    document.addEventListener('visibilitychange', function () { if (document.hidden && !done) stopCam(); else if (!document.hidden && !done && !stream) startCam(camId); });
+
+    top(L.sw_opening); engineLabel();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showErr({ name: 'SecurityError', message: 'navigator.mediaDevices unavailable' });
+      return;
+    }
+    // 摄像头和识别引擎并行准备；原生优先，WASM 在后台加载作补充/备用
+    var zxP = initZx();
+    initNative().then(function (ok) {
+      if (ok) { engine = 'native'; engineLabel(); return; }
+      return zxP.then(function (ok2) {
+        if (ok2) { engine = 'wasm'; engineLabel(); }
+        else { stopCam(); top(''); msg('<div>' + escH(L.sw_lib) + '</div>'); }
+      });
+    });
+    startCam('');
+  }
+  // ===== 扫码窗口代码结束 =====
+
+  $('scanBtn').addEventListener('click', function () {
+    if (scanWin && !scanWin.closed) { try { scanWin.close(); } catch (e) {} }
+    var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    var w = null;
+    try { w = window.open('', 'dd_scanner_' + nonce); } catch (e) { w = null; }
+    if (!w) { alert(t('scan_popup_blocked')); return; }
+    try { w.document.open(); w.document.write(scannerPageHtml(nonce)); w.document.close(); }
+    catch (e) { try { w.close(); } catch (x) {} alert(t('scan_popup_fail') + '\n' + (e && (e.name + ': ' + e.message))); return; }
+    scanWin = w; scanNonce = nonce;
+  });
+  if (IS_LOCAL) window.__ddTestScan = useScanned;      // 测试用：模拟扫码结果（只在 localhost 生效）
+
+  // ---------- Excel 导出（SheetJS，按需加载，浏览器本地生成 .xlsx，链接可点击） ----------
+  function today() { var d = new Date(), p = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()); }
+  function numOr(v) { var n = Number(v); return v !== '' && v != null && !isNaN(n) ? n : (v || ''); }
+  var REC_COLS = ['c_time', 'c_cabinet', 'c_channel', 'c_attr', 'c_batch', 'c_recipient', 'c_city', 'c_type', 'c_operator', 'c_note', 'c_file', 'c_mime', 'c_size', 'c_link', 'c_dl', 'c_folder'];
+  var LINK_COLS = [13, 14, 15];
+  function recordsAoa(recs) {
+    return [REC_COLS.map(function (k) { return t(k); })].concat(recs.map(function (x) {
+      return [x.time, x.cabinet, x.channel, x.attribute, x.batch, x.recipient, x.city, x.type, x.operator, x.note, x.fileName, x.mime, numOr(x.sizeMB), x.fileUrl, dlUrl(x), x.folderUrl];
+    }));
+  }
+  var xlsxP = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (xlsxP) return xlsxP;
+    xlsxP = XLSX_URLS.reduce(function (p, url) {
+      return p.catch(function () {
+        return new Promise(function (res, rej) {
+          var s = document.createElement('script'); s.src = url; s.async = true;
+          s.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error('xlsx')); };
+          s.onerror = function () { s.remove(); rej(new Error('xlsx')); };
+          document.head.appendChild(s);
+        });
+      });
+    }, Promise.reject(new Error('start'))).catch(function (e) { xlsxP = null; throw e; });
+    return xlsxP;
+  }
+  function exportXlsx(fileName, sheets) {
+    if (!sheets.some(function (s) { return s.aoa.length > 1; })) { toast('x_empty'); return Promise.resolve(); }
+    toast('x_loading');
+    return loadXlsx().then(function (X) {
+      var wb = X.utils.book_new();
+      sheets.forEach(function (s) {
+        var ws = X.utils.aoa_to_sheet(s.aoa);
+        ws['!cols'] = s.aoa[0].map(function (h, c) {
+          var m = String(h).length * 2;
+          for (var r = 1; r < Math.min(s.aoa.length, 300); r++) m = Math.max(m, String(s.aoa[r][c] == null ? '' : s.aoa[r][c]).length);
+          return { wch: Math.min(Math.max(m + 2, 8), 60) };
+        });
+        if (s.links) LINK_COLS.forEach(function (c) {
+          for (var r = 1; r < s.aoa.length; r++) {
+            var v = s.aoa[r][c], ref = X.utils.encode_cell({ r: r, c: c });
+            if (v && ws[ref]) ws[ref].l = { Target: String(v) };
+          }
+        });
+        ws['!autofilter'] = { ref: X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: s.aoa.length - 1, c: s.aoa[0].length - 1 } }) };
+        X.utils.book_append_sheet(wb, ws, String(s.name).slice(0, 31));
+      });
+      X.writeFile(wb, fileName);
+      toast('x_done', fileName);
+    }).catch(function () { toast('x_fail'); });
+  }
+
+  // ---------- 切换语言 ----------
+  function applyLang(l) {
+    lang = l === 'en' ? 'en' : 'zh';
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    each(document, '[data-i18n]', function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    each(document, '[data-i18n-ph]', function (el) { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+    each(document, '.lang button', function (b) {
+      b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+    document.title = t('title');
+    $('ver').textContent = t('footer', VERSION);
+    $('owner').textContent = (lang === 'en' ? 'Site owner: ' : '网站所有人：') + OWNER;
+    $('clogBtn').textContent = lang === 'en' ? 'Version history' : '版本更新记录';
+    renderSub(); renderClog(); renderMsg();
+    if (state.client) { renderCabs(); renderCab(); renderBatch(); renderScanInfo(); }
+    else if (!$('bootCard').classList.contains('hidden')) $('bootBody').innerHTML = loadingHtml();
+    if (!$('lb').classList.contains('hidden')) renderLb();
+  }
+  each(document, '.lang button', function (b) { b.addEventListener('click', function () { applyLang(b.getAttribute('data-lang')); }); });
+
+  // ---------- 版本更新记录 ----------
+  function renderClog() {
+    var en = lang === 'en';
+    $('clogTitle').textContent = en ? 'Version history' : '版本更新记录';
+    $('clogOwner').textContent = (en ? 'Site owner: ' : '网站所有人：') + OWNER + (en ? ' · Current version ' : ' · 当前版本 ') + VERSION;
+    $('clogBody').innerHTML = CHANGELOG.map(function (e) {
+      return '<div class="v"><b>' + esc(e.v) + '</b><span>' + esc(e.d) + '</span><ul>' +
+        (en ? e.en : e.zh).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+  }
+  function openClog() { $('clogMask').classList.remove('hidden'); }
+  function closeClog() { $('clogMask').classList.add('hidden'); }
+  $('clogBtn').addEventListener('click', openClog);
+  $('clogBtn').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openClog(); } });
+  $('clogClose').addEventListener('click', closeClog);
+  $('clogMask').addEventListener('click', function (e) { if (e.target === $('clogMask')) closeClog(); });
+
+  applyLang(lang);
+  boot();
+})();
+</script>
+</body>
+</html>

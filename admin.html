@@ -113,6 +113,13 @@
   .clog-x { border:0; background:#f1f3f4; border-radius:18px; width:36px; height:36px; font-size:18px; color:#5f6368; }
   .toast { position:fixed; left:50%; top:20px; transform:translateX(-50%); background:rgba(32,33,36,.92); color:#fff;
     padding:10px 16px; border-radius:10px; font-size:15px; z-index:80; max-width:90%; text-align:center; display:none; }
+  .it.hid { opacity:.5; background:#f6f7f9; } tr.hid td { opacity:.5; background:#f6f7f9; }
+  .hbtn { border:1px solid var(--line); background:#fff; border-radius:8px; font-size:12px; padding:2px 8px; color:var(--sub); }
+  .hbtn:hover { border-color:var(--err); color:var(--err); } .hid .hbtn { opacity:1; border-color:var(--pri); color:var(--pri); }
+  .tag.hid { background:#5f6368; color:#fff; }
+  .cl { display:grid; grid-template-columns:minmax(120px,auto) 1fr auto; gap:8px; align-items:center; padding:8px 0; border-top:1px solid #eef0f3; }
+  .cl:first-child { border-top:0; } .cl input { font-size:13px; padding:7px 9px; } .cl .nm2 b { display:block; } .cl .nm2 span { font-size:12px; color:var(--sub); }
+  @media (max-width:600px) { .cl { grid-template-columns:1fr auto; } .cl .nm2 { grid-column:1 / -1; } }
   @media (max-width:600px) { .lb .stage { padding:0 4px 10px; } .lb .nav { display:none; } th, td { padding:6px 7px; } }
 </style>
 </head>
@@ -225,6 +232,11 @@
       <div id="shareMsg"></div>
     </div>
     <div class="card">
+      <h2><span data-i18n="set_clients">客户专属链接</span><span class="sp"></span><button type="button" class="btn sm" id="clReload" data-i18n="reload">刷新</button></h2>
+      <div class="hint" data-i18n="clients_hint"></div>
+      <div id="clList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
       <h2 data-i18n="set_links">相关链接</h2>
       <div style="display:flex;flex-direction:column;gap:6px">
         <a id="lnSheet" target="_blank" rel="noopener" data-i18n="ln_sheet">上传记录与批次清单（Google 表格）</a>
@@ -254,10 +266,11 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1';
+  var VERSION = 'v2';
   var OWNER = 'Tino';
   // 版本更新记录：新版本加在最前面
   var CHANGELOG = [
+    { v:'v2', d:'2026-11-10', zh:['每条记录可「隐藏 / 取消隐藏」：隐藏的记录在客户查询端不显示，管理端灰色显示，数据不会删除','设置页新增客户专属链接列表，可一键复制','导出 Excel 增加「状态」列'], en:['Each record can be hidden / unhidden: hidden records are not shown to customers and appear greyed out here; nothing is deleted','Settings now list the customer links with a copy button','Excel export now includes a Status column'] },
     { v:'v1', d:'2026-11-10', zh:['内部管理端首版：柜号总览、批次详情（扫码 / 输入，影像时间线）、记录搜索、导出 Excel、留存期限和查看权限设置','管理口令保护，口令只保存在本机浏览器'], en:['First release of the admin page: cabinet overview, batch details (scan or type, media timeline), record search, Excel export, retention and sharing settings','Protected by an admin key that is saved only in this browser'] }
   ];
   var DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLweDkN1nUaDtzcUh_Ax35OSPSNPUgNASfk0N7ueYT9lrpv5xzNcgCq9FVitztDleb6A/exec';
@@ -329,10 +342,14 @@
       sw_zoom: '变焦', sw_hint: '条码横放在框内，距离约 10–20 厘米；点画面可对焦', sw_focus: '对焦',
       sw_e_other: '请重试；如果仍然不行，请把下面的错误信息截图发给管理员。',
       sw_back: '已识别。请关闭此页面，回到管理页面。',
+      hide: '隐藏', unhide: '取消隐藏', hidden_tag: '已隐藏（客户不可见）', c_status: '状态', hidden_n: '另有 {0} 个已隐藏',
+      hide_confirm: '隐藏这条记录？客户查询端将不再显示它（数据不会删除，可随时取消隐藏）。', hide_done: '已隐藏', unhide_done: '已取消隐藏',
+      set_clients: '客户专属链接', clients_hint: '客户打开链接即可查看，无需登录。在表格「客户」页签增加行、修改可见柜号或把「启用」改为「否」即可管理（最多 1 分钟生效）。',
+      cl_all: '全部柜号', cl_cabs: '可见柜号：{0}', cl_off: '已停用', copy: '复制', copied: '✔ 已复制链接', open_link: '打开', no_clients: '「客户」页签里还没有客户',
       footer: 'dangdang 影像记录管理端 {0}', unknown: '未知错误', net_err: '网络错误：{0}', v_batch: '请输入批次号',
       fld_batch: '批次号', fld_cabinet: '柜号', fld_channel: '渠道', fld_operator: '操作人', fld_shotType: '拍摄类型',
       E_ADMIN_KEY: '管理口令不正确', E_ADMIN_NOT_SET: '后台还没有设置管理口令', E_API_FN: '后台还没有更新到 v7（不支持这个接口）',
-      E_SETTING: '留存期限需为 0–120 个月', E_REQUIRED: '{0}不能为空', E_TOO_LONG: '{0}过长（最多 {1} 个字符）', E_BATCH_COL: '批次清单缺少「批次号」列'
+      E_RECORD: '找不到这条记录，请刷新后重试', E_SETTING: '留存期限需为 0–120 个月', E_REQUIRED: '{0}不能为空', E_TOO_LONG: '{0}过长（最多 {1} 个字符）', E_BATCH_COL: '批次清单缺少「批次号」列'
     },
     en: {
       title: 'dangdang Media Records · Admin', subtitle: 'Look up quantity-check, pallet, outbound and exception media for every batch',
@@ -383,10 +400,14 @@
       sw_zoom: 'Zoom', sw_hint: 'Hold the barcode level inside the frame, about 10–20 cm away; tap to focus', sw_focus: 'Focus',
       sw_e_other: 'Please retry. If it still fails, send a screenshot of the error below to the admin.',
       sw_back: 'Scanned. Please close this page and go back to the admin page.',
+      hide: 'Hide', unhide: 'Unhide', hidden_tag: 'Hidden (not visible to customers)', c_status: 'Status', hidden_n: '{0} more hidden',
+      hide_confirm: 'Hide this record? Customers will no longer see it (nothing is deleted; you can unhide it any time).', hide_done: 'Hidden', unhide_done: 'Unhidden',
+      set_clients: 'Customer links', clients_hint: 'Customers open their link to view records, no login needed. Manage them in the "客户" tab of the sheet: add rows, change visible cabinets, or set 启用 to 否 (takes effect within 1 minute).',
+      cl_all: 'All cabinets', cl_cabs: 'Cabinets: {0}', cl_off: 'Disabled', copy: 'Copy', copied: '✔ Link copied', open_link: 'Open', no_clients: 'No customers in the "客户" tab yet',
       footer: 'dangdang media admin {0}', unknown: 'Unknown error', net_err: 'Network error: {0}', v_batch: 'Please enter a batch number',
       fld_batch: 'Batch No.', fld_cabinet: 'Cabinet', fld_channel: 'Channel', fld_operator: 'Operator', fld_shotType: 'Shot type',
       E_ADMIN_KEY: 'Wrong admin key', E_ADMIN_NOT_SET: 'The admin key has not been set on the server', E_API_FN: 'The backend has not been updated to v7 yet (unsupported call)',
-      E_SETTING: 'Retention must be 0–120 months', E_REQUIRED: '{0} is required', E_TOO_LONG: '{0} is too long (max {1} characters)', E_BATCH_COL: 'The batch list has no "批次号" column'
+      E_RECORD: 'Record not found, please refresh and try again', E_SETTING: 'Retention must be 0–120 months', E_REQUIRED: '{0} is required', E_TOO_LONG: '{0} is too long (max {1} characters)', E_BATCH_COL: 'The batch list has no "批次号" column'
     }
   };
   var LANG_KEY = 'dd_lang';
@@ -481,7 +502,7 @@
   $('keyIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryKey(); });
   $('logout').addEventListener('click', function () {
     adminKey = ''; try { localStorage.removeItem(KEY_STORE); } catch (e) {}
-    state.cabs = null; state.cab = null; state.cabSel = ''; state.batch = null; state.search = null; state.settings = null;
+    state.cabs = null; state.cab = null; state.cabSel = ''; state.batch = null; state.search = null; state.settings = null; state.clients = null;
     showGate('');
   });
 
@@ -590,7 +611,7 @@
           SHOT_TYPES.map(function (x) {
             var n = b.counts[x] || 0;
             return '<td class="c">' + (n ? '<span class="' + (x === '异常反馈' ? 'exc' : 'yes') + '">✔ ' + n + '</span>' : '<span class="no">—</span>') + '</td>';
-          }).join('') + '<td class="c">' + (b.files || 0) + '</td><td>' + esc((b.lastTime || '').slice(0, 16)) + '</td></tr>';
+          }).join('') + '<td class="c">' + (b.files || 0) + (b.hiddenFiles ? ' <span class="muted" title="' + esc(t('hidden_n', b.hiddenFiles)) + '">(+' + b.hiddenFiles + ')</span>' : '') + '</td><td>' + esc((b.lastTime || '').slice(0, 16)) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     each(body, 'tr.clk', function (tr) {
       tr.addEventListener('click', function () { gotoBatch(tr.getAttribute('data-b'), state.cabSel); });
@@ -653,10 +674,12 @@
     } else {
       html = '<div class="bcard miss">' + esc(t('b_miss')) + '</div>';
     }
-    var counts = {}; SHOT_TYPES.forEach(function (x) { counts[x] = 0; }); recs.forEach(function (x) { if (counts[x.type] != null) counts[x.type]++; });
+    var counts = {}; SHOT_TYPES.forEach(function (x) { counts[x] = 0; }); recs.forEach(function (x) { if (!x.hidden && counts[x.type] != null) counts[x.type]++; });
+    var nHidden = recs.filter(function (x) { return x.hidden; }).length;
     var miss = CORE_TYPES.filter(function (x) { return !counts[x]; });
     html += '<div class="counts">' + SHOT_TYPES.map(function (x) {
       return '<span class="tag ' + (counts[x] ? ST_CLASS[x] : '') + '">' + esc(stLabel(x)) + ' ' + counts[x] + '</span>'; }).join('') +
+      (nHidden ? '<span class="tag hid">' + esc(t('hidden_n', nHidden)) + '</span>' : '') +
       (recs.length ? (miss.length ? '<span class="tag warn">' + esc(t('missing_types', miss.map(stLabel).join(' / '))) + '</span>'
                                   : '<span class="tag ok">✔ ' + esc(t('all_types_ok')) + '</span>') : '') + '</div>';
     info.innerHTML = html;
@@ -666,7 +689,7 @@
     $('bCount').textContent = ' · ' + t('b_count', recs.length);
     $('bExport').disabled = !recs.length;
     $('bTypeF').innerHTML = recs.length ? [''].concat(SHOT_TYPES).map(function (x) {
-      if (x && !counts[x]) return '';
+      if (x && !recs.some(function (y) { return y.type === x; })) return '';
       return '<button type="button" class="fchip' + (state.bType === x ? ' on' : '') + '" data-t="' + esc(x) + '">' +
         esc(x ? stLabel(x) + ' ' + counts[x] : t('f_all') + ' ' + recs.length) + '</button>';
     }).join('') : '';
@@ -682,15 +705,38 @@
     if (day !== null) out += '</div>';
     $('bTimeline').innerHTML = out;
     bindThumbs($('bTimeline'), shown);
+    bindHide($('bTimeline'), shown, renderBatch);
+  }
+  // 隐藏 / 取消隐藏（只改「状态」列，不删除数据）
+  function hideBtn(x, i) {
+    return '<button type="button" class="hbtn" data-h="' + i + '">' + esc(t(x.hidden ? 'unhide' : 'hide')) + '</button>';
+  }
+  function bindHide(root, list, rerender) {
+    each(root, '.hbtn', function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var x = list[Number(btn.getAttribute('data-h'))]; if (!x) return;
+        var to = !x.hidden;
+        if (to && !confirm(t('hide_confirm'))) return;
+        btn.disabled = true;
+        api('setRecordHidden', { row: x.row, fileId: x.fileId, fileName: x.fileName, hidden: to }).then(function (r) {
+          x.hidden = r.hidden; x.status = r.status; x.row = r.row;
+          state.cab = null; state.cabs = null;                 // 汇总数据已变化，下次打开时重新加载
+          toast(to ? 'hide_done' : 'unhide_done'); rerender();
+        }).catch(function (err) { btn.disabled = false; toast('net_err', errMsg(err)); });
+      });
+    });
   }
   function itemHtml(x, i) {
-    return '<div class="it' + (x.type === '异常反馈' ? ' it-exc' : '') + '">' + thumbHtml(x, i, false) +
+    return '<div class="it' + (x.type === '异常反馈' ? ' it-exc' : '') + (x.hidden ? ' hid' : '') + '">' + thumbHtml(x, i, false) +
       '<div class="bd"><div class="l1"><span class="tag ' + (ST_CLASS[x.type] || '') + '">' + esc(stLabel(x.type)) + '</span><span class="muted">' + esc((x.time || '').slice(11, 19)) + '</span></div>' +
+      (x.hidden ? '<div><span class="tag hid">' + esc(t('hidden_tag')) + '</span></div>' : '') +
       '<div><span class="muted">' + esc(t('c_operator')) + ': </span>' + esc(x.operator || '-') + (x.cabinet ? ' · <span class="muted">' + esc(t('cab_t', x.cabinet)) + '</span>' : '') + '</div>' +
       (x.note ? '<div class="note"><span class="muted">' + esc(t('c_note')) + ': </span>' + esc(x.note) + '</div>' : '') +
       '<div class="nm" title="' + esc(x.fileName) + '">' + esc(x.fileName) + (x.sizeMB ? ' · ' + esc(x.sizeMB) + 'MB' : '') + '</div>' +
       '<div class="lk">' + (x.fileUrl ? '<a href="' + esc(x.fileUrl) + '" target="_blank" rel="noopener">' + esc(t('open')) + '</a>' : '') +
-      (x.folderUrl ? '<a href="' + esc(x.folderUrl) + '" target="_blank" rel="noopener">' + esc(t('folder')) + '</a>' : '') + '</div></div></div>';
+      (x.folderUrl ? '<a href="' + esc(x.folderUrl) + '" target="_blank" rel="noopener">' + esc(t('folder')) + '</a>' : '') +
+      '<span style="flex:1"></span>' + hideBtn(x, i) + '</div></div></div>';
   }
   // 缩略图：Drive 缩略图地址；文件夹设为知道链接可查看后任何浏览器都能显示，否则需要浏览器登录了上传账号
   function thumbUrl(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + (w || 400); }
@@ -1181,14 +1227,15 @@
     $('sCount').textContent = t('s_count', r.total) + (r.truncated ? t('s_trunc', recs.length) : '');
     $('sExport').disabled = !recs.length;
     if (!recs.length) { body.innerHTML = '<div class="empty">' + esc(t('s_none')) + '</div>'; return; }
-    body.innerHTML = '<div class="tw"><table><thead><tr><th>' + [t('c_thumb'), t('c_time'), t('c_cabinet'), t('c_channel'), t('c_batch'), t('c_type'), t('c_operator'), t('c_note'), t('c_file')].map(esc).join('</th><th>') +
+    body.innerHTML = '<div class="tw"><table><thead><tr><th>' + [t('c_thumb'), t('c_time'), t('c_cabinet'), t('c_channel'), t('c_batch'), t('c_type'), t('c_operator'), t('c_note'), t('c_file'), t('c_status')].map(esc).join('</th><th>') +
       '</th></tr></thead><tbody>' + recs.map(function (x, i) {
-        return '<tr><td>' + thumbHtml(x, i, true) + '</td><td>' + esc(x.time) + '</td><td>' + esc(x.cabinet) + '</td><td>' + esc(chLabel(x.channel)) + '</td>' +
+        return '<tr' + (x.hidden ? ' class="hid"' : '') + '><td>' + thumbHtml(x, i, true) + '</td><td>' + esc(x.time) + '</td><td>' + esc(x.cabinet) + '</td><td>' + esc(chLabel(x.channel)) + '</td>' +
           '<td><a href="#batch/' + encodeURIComponent(x.batch) + '/' + encodeURIComponent(x.cabinet) + '" data-b="' + esc(x.batch) + '" data-c="' + esc(x.cabinet) + '" class="bl">' + esc(x.batch) + '</a></td>' +
           '<td><span class="tag ' + (ST_CLASS[x.type] || '') + '">' + esc(stLabel(x.type)) + '</span></td><td>' + esc(x.operator) + '</td><td class="wrap">' + esc(x.note) + '</td>' +
-          '<td>' + (x.fileUrl ? '<a href="' + esc(x.fileUrl) + '" target="_blank" rel="noopener">' + esc(t('open')) + '</a>' : '') + ' <span class="muted">' + esc(x.sizeMB ? x.sizeMB + 'MB' : '') + '</span></td></tr>';
+          '<td>' + (x.fileUrl ? '<a href="' + esc(x.fileUrl) + '" target="_blank" rel="noopener">' + esc(t('open')) + '</a>' : '') + ' <span class="muted">' + esc(x.sizeMB ? x.sizeMB + 'MB' : '') + '</span></td><td>' + (x.hidden ? '<span class="tag hid">' + esc(t('hidden_tag')) + '</span> ' : '') + hideBtn(x, i) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     bindThumbs(body, recs);
+    bindHide(body, recs, renderSearch);
     each(body, 'a.bl', function (a) {
       a.addEventListener('click', function (e) { e.preventDefault(); gotoBatch(a.getAttribute('data-b'), a.getAttribute('data-c')); });
     });
@@ -1201,7 +1248,7 @@
   // ---------- 设置 ----------
   var RET_OPTS = [0, 3, 6, 12, 24, 36, 60];
   function loadSettings() {
-    state.settingsErr = null;
+    state.settingsErr = null; loadClients();
     $('shareState').innerHTML = '<span class="spin"></span>' + esc(t('loading'));
     api('getSettings').then(function (s) { state.settings = s; }).catch(function (e) { state.settingsErr = e; }).then(renderSettings);
   }
@@ -1234,16 +1281,45 @@
   }
   $('sharePub').addEventListener('click', function () { setShare(true); });
   $('sharePriv').addEventListener('click', function () { setShare(false); });
+  // 客户专属链接（来自表格「客户」页签）
+  function clientLink(tok) { return location.origin + location.pathname.replace(/[^\/]*$/, '') + 'client.html?c=' + encodeURIComponent(tok); }
+  function loadClients() {
+    state.clientsErr = null; $('clList').innerHTML = loadingHtml();
+    api('listClients').then(function (r) { state.clients = r || []; }).catch(function (e) { state.clientsErr = e; }).then(renderClients);
+  }
+  function renderClients() {
+    var el = $('clList');
+    if (state.clientsErr) { el.innerHTML = errHtml(state.clientsErr); return; }
+    if (!state.clients) { el.innerHTML = ''; return; }
+    if (!state.clients.length) { el.innerHTML = '<div class="empty">' + esc(t('no_clients')) + '</div>'; return; }
+    el.innerHTML = state.clients.map(function (c, i) {
+      return '<div class="cl"><div class="nm2"><b>' + esc(c.name || '-') + (c.enabled ? '' : ' <span class="tag exc">' + esc(t('cl_off')) + '</span>') + '</b><span>' +
+        esc(c.all ? t('cl_all') : t('cl_cabs', c.cabinets.join(', '))) + '</span></div>' +
+        '<input type="text" readonly value="' + esc(clientLink(c.token)) + '" data-i="' + i + '">' +
+        '<div style="display:flex;gap:6px"><button type="button" class="btn sm" data-cp="' + i + '">' + esc(t('copy')) + '</button>' +
+        '<a class="btn sm" style="display:inline-flex;align-items:center" target="_blank" rel="noopener" href="' + esc(clientLink(c.token)) + '">' + esc(t('open_link')) + '</a></div></div>';
+    }).join('');
+    each(el, '[data-cp]', function (b) {
+      b.addEventListener('click', function () {
+        var inp = el.querySelector('input[data-i="' + b.getAttribute('data-cp') + '"]'), v = inp.value;
+        var fallback = function () { inp.focus(); inp.select(); try { document.execCommand('copy'); } catch (e) {} toast('copied'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { toast('copied'); }, fallback);
+        else fallback();
+      });
+    });
+    each(el, 'input[readonly]', function (inp) { inp.addEventListener('focus', function () { inp.select(); }); });
+  }
+  $('clReload').addEventListener('click', loadClients);
   $('lnSheet').href = SHEET_URL; $('lnFolder').href = FOLDER_URL; $('lnUpload').href = UPLOAD_URL;
 
   // ---------- Excel 导出（SheetJS，在浏览器本地生成 .xlsx，文件链接可点击） ----------
   function today() { var d = new Date(), p = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()); }
   function numOr(v) { var n = Number(v); return v !== '' && v != null && !isNaN(n) ? n : (v || ''); }
-  var REC_COLS = ['c_time', 'c_cabinet', 'c_channel', 'c_attr', 'c_batch', 'c_recipient', 'c_city', 'c_type', 'c_operator', 'c_note', 'c_file', 'c_mime', 'c_size', 'c_link', 'c_folder'];
+  var REC_COLS = ['c_time', 'c_cabinet', 'c_channel', 'c_attr', 'c_batch', 'c_recipient', 'c_city', 'c_type', 'c_operator', 'c_note', 'c_file', 'c_mime', 'c_size', 'c_link', 'c_folder', 'c_status'];
   var LINK_COLS = [13, 14];
   function recordsAoa(recs) {
     return [REC_COLS.map(function (k) { return t(k); })].concat(recs.map(function (x) {
-      return [x.time, x.cabinet, x.channel, x.attribute, x.batch, x.recipient, x.city, x.type, x.operator, x.note, x.fileName, x.mime, numOr(x.sizeMB), x.fileUrl, x.folderUrl];
+      return [x.time, x.cabinet, x.channel, x.attribute, x.batch, x.recipient, x.city, x.type, x.operator, x.note, x.fileName, x.mime, numOr(x.sizeMB), x.fileUrl, x.folderUrl, x.status || ''];
     }));
   }
   var xlsxP = null;
@@ -1304,7 +1380,7 @@
     $('owner').textContent = (lang === 'en' ? 'Site owner: ' : '网站所有人：') + OWNER;
     $('clogBtn').textContent = lang === 'en' ? 'Version history' : '版本更新记录';
     renderClog(); fillSearchSelects();
-    renderCabs(); renderCab(); renderBatch(); renderScanInfo(); renderSearch(); renderSettings();
+    renderCabs(); renderCab(); renderBatch(); renderScanInfo(); renderSearch(); renderSettings(); renderClients();
     if (!$('gate').classList.contains('hidden') && $('gateMsg').querySelector('.err-box')) { /* 保留错误提示 */ }
     if (!$('lb').classList.contains('hidden')) renderLb();
   }
