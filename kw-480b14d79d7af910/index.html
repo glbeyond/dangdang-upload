@@ -1,12 +1,21 @@
 <!doctype html>
 <html lang="zh-CN">
-<!-- FEST7 库位查询 V2.0 · 由 build.js 从 src/ 生成，请勿直接编辑 · src 70dee62f6604 -->
+<!-- FEST7 库位查询 V2.0 · 由 build.js 从 src/ 生成，请勿直接编辑 · src 22b21b27e7be -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b2545">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="库位查询">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="库位查询">
 <meta name="format-detection" content="telephone=no">
 <title>FEST7 库位查询 V2</title>
 <style>
@@ -83,6 +92,12 @@ h2 { font-size: 17px; margin: 18px 0 8px; }
   main.wrap { padding: 16px 20px 48px; }
   .home { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 }
+
+/* PWA：新版本横幅 / 独立窗口 */
+.banner.info { background: var(--navy-soft); border-color: var(--navy-2); color: var(--navy); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; }
+.banner.info .btn-s { border-color: var(--navy); color: #fff; background: var(--navy); font-weight: 700; }
+.banner.info small { color: var(--muted); }
+#installBtn { border-color: var(--green); color: var(--green-ink); font-weight: 700; }
 
 /* ==== src/styles/components.css ==== */
 /* 入口：扫码 + 输入 */
@@ -407,6 +422,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px
 </header>
 
 <main class="wrap">
+  <div id="swBanner" class="banner info" hidden role="status"><button type="button" id="swUpdateBtn" class="btn-s">有新版本，点此更新</button><small>页面会刷新一次</small></div>
   <div id="freshBanner" class="banner" hidden role="alert"></div>
 
   <div class="home">
@@ -458,6 +474,10 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px
         <button type="button" id="syncBtn">一键同步</button>
         <span id="syncStatus" role="status" aria-live="polite"></span>
       </div>
+      <div class="st-line" id="installRow" hidden>
+        <span class="st-k">可以像 App 一样放到手机桌面</span>
+        <button type="button" id="installBtn" class="btn-s">安装到主屏幕</button>
+      </div>
       <details>
         <summary>数据说明</summary>
         <p>数据更新时间 = WMS 快照时间（意大利时间）。数据来自领星 WMS「按库位查询」导出，是<b>快照，不是实时 WMS 查询</b>。自动同步在意大利时间周一至周六 8:30–18:30 每小时上传一次。</p>
@@ -495,6 +515,8 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px
       <li><b>连续扫码</b>：相机识别后不关闭，可以接着扫下一个；同一个码 1.5 秒内不重复识别。可与批量查询同时打开。</li>
       <li>扫码枪：扫完自动回车即查；查询后输入框清空，可直接扫下一个。电脑上输入框不在焦点时也能接收扫码枪。</li>
       <li>摄像头需要 https，请用 Chrome 或 Safari 打开（不要在微信里打开）。</li>
+      <li id="iosHint" hidden><b>iPhone 添加到主屏幕：</b>用 Safari 打开本页，点底部「分享」→「添加到主屏幕」。</li>
+      <li>安装到主屏幕后，从桌面图标打开是全屏窗口，扫码照常可用（iPhone 需 iOS 13.4 以上）。没有网络时页面也能打开，但库存数据需要联网：连不上服务器时只会显示本机缓存，并有红色警告。</li>
       <li>数字说明：「可用」= 可用库存；「锁定」= 已被订单占用；「次品」= 库存属性为次品，单独标红。可用总库存包含次品可用数，次品会单独注明。</li>
     </ul>
   </details>
@@ -2207,7 +2229,7 @@ function scannerMain() {
       $('pillText').textContent = '快照 ' + DS.formatClock(snapMs(), 'Europe/Rome', true) + ' · 非实时';
       $('dataTime').textContent = snapLabel();
       $('dataAge').textContent = '意大利时间 · ' + DS.formatAge(Math.max(0, fr.ageMs)) + ' · 非实时，同步不等于实时 WMS';
-      $('freshTag').className = 'tag lv-' + fr.level;
+      $('freshTag').className = 'tag lv-' + (S.source === 'cache' ? 'strong' : fr.level); // 本机缓存一律红色
       $('freshTag').textContent = S.source === 'cache' ? '本机缓存' : txt.short;
       $('stats').innerHTML = '<span>记录 <b>' + fmt(meta.rowCount) + '</b></span><span>SKU <b>' + fmt(meta.uniqueSkus) + '</b></span>' +
         '<span>库位 <b>' + fmt(meta.uniqueLocations) + '</b></span><span>客户 <b>' + fmt(meta.uniqueCustomers) + '</b></span>' +
@@ -2544,6 +2566,122 @@ function scannerMain() {
   // 供端到端测试读取状态（只读）
   KW.debug = { state: function () { return S; }, commit: commitQuery, sync: syncData, scrollResultsIntoView: scrollResultsIntoView };
   boot();
+})();
+</script>
+<script>
+/* ==== src/app/pwa.js ==== */
+/* FEST7 库位查询：PWA 页面侧逻辑
+   - 注册 Service Worker（相对路径 ./sw.js，作用范围 ./，只管本目录）
+   - 有新版本时显示「有新版本，点此更新」，点击后 skipWaiting 并刷新
+   - 安卓 Chrome：beforeinstallprompt 时显示「安装到主屏幕」按钮；iOS：在「说明」里显示添加到主屏幕的提示
+   - 以独立窗口（主屏幕图标）运行时隐藏安装入口
+   不涉及 data.json：数据加载、10 分钟自动检查、一键同步都在 main.js，保持不变。 */
+(function () {
+  'use strict';
+  var KW = window.KW, $ = KW.$;
+  var UPDATE_CHECK_MS = 10 * 60 * 1000;
+  var P = KW.pwa = {
+    supported: 'serviceWorker' in navigator,
+    registration: null, waiting: null, deferredPrompt: null,
+    regError: '', updateShown: false, reloading: false, lastUpdateCheck: 0
+  };
+
+  P.isStandalone = function () {
+    try { if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true; } catch (e) {}
+    return window.navigator.standalone === true;
+  };
+  P.isIOS = function () {
+    var ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  };
+
+  /* ---------- 安装入口 ---------- */
+  function refreshInstallUI() {
+    var standalone = P.isStandalone();
+    document.documentElement.classList.toggle('is-standalone', standalone);
+    $('installRow').hidden = standalone || !P.deferredPrompt;
+    $('iosHint').hidden = standalone || !P.isIOS();
+  }
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();              // 不弹浏览器自带的横条，改用页面里的小按钮
+    P.deferredPrompt = e;
+    refreshInstallUI();
+  });
+  window.addEventListener('appinstalled', function () {
+    P.deferredPrompt = null;
+    refreshInstallUI();
+    KW.toast('已安装到主屏幕', 'exact');
+  });
+  $('installBtn').addEventListener('click', function () {
+    var ev = P.deferredPrompt;
+    if (!ev) return;
+    P.deferredPrompt = null;
+    ev.prompt();
+    Promise.resolve(ev.userChoice).catch(function () {}).then(refreshInstallUI);
+  });
+  try {
+    var mq = window.matchMedia && window.matchMedia('(display-mode: standalone)');
+    if (mq && mq.addEventListener) mq.addEventListener('change', refreshInstallUI);
+  } catch (e) {}
+  refreshInstallUI();
+
+  /* ---------- 新版本横幅 ---------- */
+  function showUpdate(worker) {
+    P.waiting = worker;
+    P.updateShown = true;
+    $('swBanner').hidden = false;
+  }
+  $('swUpdateBtn').addEventListener('click', function () {
+    var w = P.waiting || (P.registration && P.registration.waiting);
+    var btn = $('swUpdateBtn');
+    btn.disabled = true; btn.textContent = '正在更新…';
+    P.reloading = true;
+    if (w) w.postMessage({ type: 'SKIP_WAITING' });
+    // 兜底：controllerchange 没触发也刷新
+    setTimeout(function () { window.location.reload(); }, 4000);
+  });
+
+  function watch(reg) {
+    if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+    reg.addEventListener('updatefound', function () {
+      var nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', function () {
+        // 只有已有旧版本在控制页面时才提示；第一次安装不提示
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdate(nw);
+      });
+    });
+  }
+  P.checkUpdate = function () {
+    if (!P.registration) return Promise.resolve();
+    P.lastUpdateCheck = Date.now();
+    return P.registration.update().catch(function () {});
+  };
+
+  if (!P.supported || KW.CFG.noServiceWorker) return;
+  var secure = false;
+  try { secure = !!window.isSecureContext; } catch (e) {}
+  if (!secure) return;
+
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!P.reloading) return;      // 只在用户点了「更新」后刷新，避免意外跳页
+    P.reloading = false;
+    window.location.reload();
+  });
+
+  function register() {
+    navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function (reg) {
+      P.registration = reg;
+      P.lastUpdateCheck = Date.now();
+      watch(reg);
+      setInterval(P.checkUpdate, UPDATE_CHECK_MS);
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && Date.now() - P.lastUpdateCheck > 60 * 1000) P.checkUpdate();
+      });
+    }).catch(function (e) { P.regError = (e && e.message) || String(e); });
+  }
+  if (document.readyState === 'complete') register();
+  else window.addEventListener('load', register);
 })();
 </script>
 </body>
