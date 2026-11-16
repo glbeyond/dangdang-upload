@@ -1,167 +1,316 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+<!-- FEST7 库位查询 V2.0 · 由 build.js 从 src/ 生成，请勿直接编辑 · src 70dee62f6604 -->
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1c1915">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>fest7 库位查询</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b2545">
+<meta name="format-detection" content="telephone=no">
+<title>FEST7 库位查询 V2</title>
 <style>
+/* ==== src/styles/base.css ==== */
+/* FEST7 库位查询 V2 · Industrial Precision
+   浅色底 + 深海蓝 + 工业绿；高对比度；整页自然滚动（不使用 sticky / fixed 页面块）。 */
 :root {
-  --bg: #f4f1ea;
-  --paper: #fffdf8;
-  --ink: #1c1915;
-  --muted: #6b645b;
-  --line: #e4ddd2;
-  --accent: #1f5c4d;
-  --accent-soft: #e7f2ee;
-  --warn: #8a3a16;
-  --warn-bg: #f8eadf;
-  --focus: #1f5c4d;
-  --scan: #1a73e8;
+  --bg: #eef1f4;
+  --paper: #ffffff;
+  --ink: #0d1b2a;
+  --muted: #47566a;
+  --line: #c3ccd6;
+  --line-strong: #8d9bab;
+  --navy: #0b2545;
+  --navy-2: #13315c;
+  --navy-soft: #e6ecf4;
+  --green: #0b7a4b;
+  --green-ink: #075c38;
+  --green-soft: #e1f2e9;
+  --amber: #9a5b00;
+  --amber-line: #e0a23a;
+  --amber-soft: #fff4dc;
+  --red: #b3261e;
+  --red-soft: #fde9e7;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Roboto Mono", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --r: 6px;
 }
 * { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0; background: var(--bg); color: var(--ink);
-  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
 }
-body.scanning { overflow: hidden; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+
 header {
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  background: var(--navy); color: #fff; border-bottom: 3px solid var(--green);
+  padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top));
 }
-.wrap { max-width: 1200px; margin: 0 auto; padding: 14px 16px; }
-.head-line { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap; }
-h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: .02em; }
-.note { color: var(--muted); font-size: 13px; margin: 0; }
-.note strong { color: var(--ink); font-weight: 600; }
-.stats { display: flex; gap: 10px 14px; flex-wrap: wrap; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
-.stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.controls { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; margin-top: 12px; }
-.help-box { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
-.help-box summary {
-  cursor: pointer; font-size: 13px; font-weight: 650; color: var(--ink);
-  list-style: none; display: inline-block; user-select: none;
+.appbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: 1180px; margin: 0 auto; }
+.brand { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.brand .mark { font-family: var(--mono); font-weight: 800; letter-spacing: .08em; font-size: 17px; }
+.brand .title { font-weight: 700; font-size: 17px; white-space: nowrap; }
+.brand .ver { font-family: var(--mono); font-size: 11px; color: #b9c7da; border: 1px solid #4a6286; border-radius: 3px; padding: 0 4px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid #4a6286; background: var(--navy-2);
+  color: #fff; border-radius: 999px; padding: 4px 10px; font-size: 13px; white-space: nowrap;
 }
-.help-box summary::-webkit-details-marker { display: none; }
-.help-box summary::before { content: "▸ "; }
-.help-box[open] summary::before { content: "▾ "; }
-.help-box .data-sub, .help-box .sync-help, .help-box .hint-row { margin: 6px 0 0; }
-.modes { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 3px; flex-wrap: wrap; }
-.modes button {
-  border: 0; background: transparent; color: var(--muted);
-  padding: 10px 14px; border-radius: 10px; cursor: pointer; font: inherit; font-weight: 650;
-  min-height: 44px;
-}
-.modes button[aria-pressed="true"] { background: var(--paper); color: var(--accent); box-shadow: 0 1px 2px rgba(28,25,21,.08); }
-.search { flex: 1; min-width: 200px; position: relative; }
-.search input {
-  width: 100%; height: 48px; padding: 10px 44px 10px 14px; border: 1px solid var(--line);
-  border-radius: 12px; font: inherit; font-size: 16px; background: #fff; color: var(--ink);
-  outline: none; -webkit-appearance: none;
-}
-.search input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(31,92,77,.15); }
-.search .clear {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  border: 0; background: transparent; color: var(--muted); cursor: pointer;
-  width: 36px; height: 36px; border-radius: 8px; font-size: 22px; line-height: 1;
-}
-.search .clear:hover { background: var(--bg); color: var(--ink); }
-.scan-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-#scanBtn {
-  border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 700;
-  font-size: 16px; padding: 0 18px; height: 48px; border-radius: 12px; cursor: pointer;
-  min-width: 112px;
-}
-#scanBtn:active { transform: scale(.98); }
-.cont-lab {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink);
-  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
-  padding: 0 12px; height: 48px; user-select: none; cursor: pointer;
-}
-.cont-lab input { width: 18px; height: 18px; accent-color: var(--accent); }
-#httpsWarn {
-  margin-top: 10px; background: var(--warn-bg); color: var(--warn);
-  border-radius: 10px; padding: 10px 12px; font-size: 13px;
-}
-#httpsWarn[hidden] { display: none !important; }
-.hint-row { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
-main.wrap { padding-top: 16px; padding-bottom: 56px; }
-.sum-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.chip {
-  background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
-  padding: 8px 12px; font-size: 13px; color: var(--muted);
-}
-.chip b { color: var(--ink); font-variant-numeric: tabular-nums; font-size: 16px; }
-.resolved { font-size: 14px; margin: 0 0 10px; color: var(--accent); font-weight: 650; }
-.empty { color: var(--muted); padding: 32px 8px; text-align: center; font-size: 15px; }
-.query-echo { display: inline-block; margin-top: 8px; font-weight: 700; color: var(--ink); font-size: 18px; }
-h2 { font-size: 15px; font-weight: 700; margin: 18px 0 10px; color: var(--ink); }
-.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; background: var(--paper);
-  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line);
-  vertical-align: top; font-size: 14px; }
-th { font-weight: 650; color: var(--muted); background: #f7f3ec; font-size: 12px; }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 15px; }
-tbody tr:hover { background: var(--accent-soft); }
-tbody tr:last-child td { border-bottom: 0; }
-.linkish { color: var(--accent); cursor: pointer; background: none; border: 0;
-  padding: 0; font: inherit; font-weight: 700; text-align: left; font-size: 16px; }
-.linkish:hover { text-decoration: underline; }
-.badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 650; }
-.badge.def { background: var(--warn-bg); color: var(--warn); }
-.badge.ok { background: var(--accent-soft); color: var(--accent); }
-.sku { font-weight: 700; }
-.sub, .bar { font-size: 13px; }
-.sub { color: var(--muted); }
-.hint { margin: 8px 0; color: var(--muted); font-size: 12px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #9aa7b6; flex: none; }
+.lv-fresh .dot, .dot.lv-fresh { background: #2fbf71; }
+.lv-warn .dot, .dot.lv-warn { background: #f0a020; }
+.lv-strong .dot, .dot.lv-strong, .lv-error .dot { background: #ff5a4f; }
 
-/* 手机卡片；桌面用表格 */
-.cards { display: none; gap: 10px; flex-direction: column; }
-.card {
-  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
-  padding: 14px 14px 12px; box-shadow: 0 1px 2px rgba(28,25,21,.04);
-}
-.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.card-main .linkish { font-size: 22px; letter-spacing: .01em; line-height: 1.25; word-break: break-all; }
-.card-qty { text-align: right; flex-shrink: 0; }
-.card-qty b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; color: var(--accent); line-height: 1.1; }
-.card-qty span { font-size: 12px; color: var(--muted); }
-.card-sub { margin-top: 6px; font-size: 16px; }
-.card-sub .linkish { font-size: 18px; }
-.card-name { margin-top: 4px; color: var(--ink); font-size: 15px; }
-.card-meta { margin-top: 4px; color: var(--muted); font-size: 13px; }
-.card-nums { display: flex; gap: 16px; margin-top: 8px; color: var(--muted); font-size: 14px; }
-.card-nums b { color: var(--ink); font-variant-numeric: tabular-nums; font-size: 16px; }
+main.wrap { max-width: 1180px; margin: 0 auto; padding: 12px 12px 40px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); }
+h2 { font-size: 17px; margin: 18px 0 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
 
-@media (max-width: 720px) {
-  .wrap { padding: 8px 12px; }
-  header .wrap { padding: 8px 12px 10px; }
-  h1 { font-size: 17px; }
-  .data-time { font-size: 12px; font-weight: 650; margin: 0; }
-  .stats { margin: 4px 0 0; font-size: 12px; gap: 4px 10px; }
-  .stats b { font-size: 13px; }
-  .sync-row { margin: 6px 0 0; }
-  #syncBtn { height: 36px; font-size: 13px; }
-  .help-box { margin: 6px 0 0; }
-  .controls { flex-direction: column; margin-top: 8px; gap: 8px; }
-  .modes { width: 100%; }
-  .modes button { flex: 1; padding: 8px 10px; min-height: 40px; }
-  .search input { height: 44px; }
-  .scan-actions { width: 100%; }
-  #scanBtn { flex: 1 1 calc(50% - 8px); height: 44px; font-size: 16px; min-width: 0; }
-  .cont-lab { flex: 1 1 calc(50% - 8px); justify-content: center; min-height: 44px; height: auto; font-size: 13px; padding: 8px 8px; white-space: nowrap; }
-  main.wrap { padding-top: 10px; padding-bottom: 40px; }
-  .cards { display: flex; }
-  .table-wrap { display: none; }
-  th.col-hide, td.col-hide { display: none; }
-}
-@media (min-width: 721px) {
-  .cards { display: none; }
-  .table-wrap { display: block; }
+/* 横幅 */
+.banner { border-radius: var(--r); padding: 10px 12px; margin: 0 0 10px; font-size: 15px; border: 1px solid; }
+.banner b { font-weight: 800; }
+.banner.warn { background: var(--amber-soft); border-color: var(--amber-line); color: #5c3700; }
+.banner.strong, .banner.error { background: var(--red-soft); border-color: var(--red); color: #6b120d; }
+.banner .banner-act { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 桌面：结果卡片多列；输入区和状态并排 */
+@media (min-width: 900px) {
+  main.wrap { padding: 16px 20px 48px; }
+  .home { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 }
 
+/* ==== src/styles/components.css ==== */
+/* 入口：扫码 + 输入 */
+.entry { padding: 12px; }
+.btn-scan {
+  width: 100%; min-height: 60px; border: 0; border-radius: var(--r);
+  background: var(--green); color: #fff; font-size: 20px; font-weight: 800; letter-spacing: .04em;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-scan:active { background: var(--green-ink); }
+.btn-scan svg { width: 26px; height: 26px; }
+.qform { display: flex; gap: 8px; margin-top: 10px; }
+.qbox { position: relative; flex: 1; min-width: 0; }
+#q {
+  width: 100%; height: 52px; border: 2px solid var(--navy); border-radius: var(--r);
+  padding: 0 44px 0 12px; font-family: var(--mono); font-size: 18px; background: #fff; color: var(--ink);
+}
+#q::placeholder { font-family: var(--sans); font-size: 15px; color: #6b7889; }
+#q:focus { outline: 3px solid rgba(11,122,75,.35); outline-offset: 1px; }
+#clear {
+  position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; background: transparent;
+  font-size: 24px; color: var(--muted);
+}
+#goBtn {
+  flex: none; height: 52px; min-width: 76px; border: 0; border-radius: var(--r);
+  background: var(--navy); color: #fff; font-weight: 800; font-size: 17px; padding: 0 14px;
+}
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.tgl {
+  display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--r);
+  padding: 8px 10px; min-height: 52px; background: #f7f9fb; cursor: pointer;
+}
+.tgl input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--green); flex: none; }
+.tgl b { display: block; font-size: 15px; }
+.tgl small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; }
+.tgl:has(input:checked) { border-color: var(--green); background: var(--green-soft); }
+details.adv { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+details > summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--navy-2); padding: 6px 0; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; display: inline-block; width: 1em; color: var(--muted); }
+details[open] > summary::before { content: "▾"; }
+.adv-body { display: grid; gap: 10px; padding: 4px 0 4px; }
+.seg { display: flex; border: 1px solid var(--navy); border-radius: var(--r); overflow: hidden; }
+.seg button { flex: 1; border: 0; background: #fff; padding: 10px 6px; font-weight: 700; font-size: 14px; color: var(--navy); }
+.seg button + button { border-left: 1px solid var(--navy); }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+.opt { display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 36px; }
+.opt input { width: 20px; height: 20px; accent-color: var(--green); }
+.opt small { color: var(--muted); font-size: 12px; }
+.adv-label { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .04em; }
+#httpsWarn { margin-top: 10px; }
+
+/* 数据状态（简洁） */
+.status { padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+@media (min-width: 900px) { .status { margin-top: 0; } }
+.st-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.st-line + .st-line { margin-top: 6px; }
+.st-k { color: var(--muted); }
+.st-v { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tag { font-size: 12px; font-weight: 700; border-radius: 3px; padding: 1px 6px; border: 1px solid var(--line-strong); color: var(--muted); }
+.tag.lv-fresh { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
+.tag.lv-warn { color: var(--amber); border-color: var(--amber-line); background: var(--amber-soft); }
+.tag.lv-strong { color: var(--red); border-color: var(--red); background: var(--red-soft); }
+#syncBtn {
+  margin-left: auto; border: 1px solid var(--navy); background: #fff; color: var(--navy);
+  font-weight: 800; font-size: 14px; height: 38px; padding: 0 14px; border-radius: var(--r);
+}
+#syncBtn:disabled { opacity: .6; cursor: wait; }
+#syncStatus { font-size: 13px; color: var(--muted); width: 100%; }
+#syncStatus.is-ok { color: var(--green-ink); }
+#syncStatus.is-err { color: var(--red); font-weight: 700; }
+.status details { margin-top: 6px; }
+.status details p { margin: 4px 0; color: var(--muted); font-size: 13px; }
+.stats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); }
+.stats b { color: var(--ink); font-family: var(--mono); }
+
+/* 批量栏 */
+#multiBar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 0 8px;
+  padding: 8px 10px; background: var(--navy-soft); border: 1px solid #b9c7da; border-radius: var(--r);
+}
+#multiCount { font-weight: 800; color: var(--navy); margin-right: auto; }
+.btn-s {
+  border: 1px solid var(--line-strong); background: #fff; border-radius: var(--r);
+  min-height: 38px; padding: 0 12px; font-size: 14px; font-weight: 700;
+}
+.btn-s:disabled { opacity: .45; cursor: default; }
+.btn-s.danger { border-color: var(--red); color: var(--red); }
+.btn-s.confirm { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* 结果状态条 */
+#results { margin-top: 14px; scroll-margin-top: 8px; }
+.outcome {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--r);
+  border: 1px solid var(--line); background: #fff; border-left: 6px solid var(--line-strong); margin-bottom: 10px;
+}
+.outcome .oc-k { font-weight: 800; font-size: 15px; }
+.outcome .oc-q { font-family: var(--mono); font-weight: 700; font-size: 17px; word-break: break-all; }
+.outcome .oc-sub { color: var(--muted); font-size: 13px; width: 100%; }
+.outcome.exact { border-left-color: var(--green); }
+.outcome.exact .oc-k { color: var(--green-ink); }
+.outcome.partial { border-left-color: var(--amber-line); }
+.outcome.partial .oc-k { color: var(--amber); }
+.outcome.none, .outcome.nodata { border-left-color: var(--red); background: var(--red-soft); }
+.outcome.none .oc-k, .outcome.nodata .oc-k { color: var(--red); }
+.empty { padding: 18px 14px; color: var(--muted); background: #fff; border: 1px dashed var(--line-strong); border-radius: var(--r); font-size: 15px; }
+.hint { color: var(--amber); font-weight: 700; font-size: 14px; margin: 6px 0; }
+.sec-h { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 8px; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: .03em; }
+.sec-h b { color: var(--ink); }
+.sorter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0; font-size: 13px; color: var(--muted); }
+.sorter button { border: 1px solid var(--line-strong); background: #fff; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700; color: var(--navy); min-height: 32px; }
+.sorter button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* SKU 头部 */
+.grp { margin-bottom: 14px; }
+.sku-head, .loc-head { padding: 12px; border-radius: var(--r) var(--r) 0 0; background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--navy); }
+.sku-code, .loc-code { font-family: var(--mono); font-weight: 800; color: var(--navy); word-break: break-all; }
+.sku-code { font-size: 22px; }
+.loc-code { font-size: 30px; letter-spacing: .02em; }
+.sku-bar { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.sku-name { margin-top: 2px; font-size: 15px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.kpi { border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; background: #f7f9fb; }
+.kpi span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; }
+.kpi b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 20px; line-height: 1.2; }
+.kpi.main { background: var(--green-soft); border-color: var(--green); }
+.kpi.main b { color: var(--green-ink); font-size: 26px; }
+.kpi.warn b { color: var(--amber); }
+.kpi.bad b { color: var(--red); }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.meta-line { font-size: 13px; color: var(--muted); margin-top: 6px; word-break: break-word; }
+
+/* 库位卡片（SKU 结果） */
+.cards { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 8px; background: #e3e8ee; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r) var(--r); }
+@media (min-width: 600px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lc { background: #fff; border: 1px solid var(--line); border-left: 6px solid var(--green); border-radius: 4px; padding: 10px 12px; }
+.lc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.lc-loc { font-family: var(--mono); font-weight: 800; font-size: 26px; line-height: 1.15; color: var(--navy); word-break: break-all; background: none; border: 0; padding: 0; text-align: left; }
+.lc-qty { text-align: right; flex: none; }
+.lc-qty b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 28px; line-height: 1; color: var(--green-ink); }
+.lc-qty span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.lc-sub { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.lc-sub b { font-family: var(--mono); color: var(--ink); }
+.lc.st-locked { border-left-color: var(--amber-line); }
+.lc.st-zero { border-left-color: var(--line-strong); background: #f4f6f8; }
+.lc.st-zero .lc-qty b { color: #7a8796; }
+.lc.st-def { border-left-color: var(--red); }
+.badge { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 3px; padding: 1px 6px; border: 1px solid; line-height: 1.5; }
+.badge.ok { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
+.badge.def { color: #fff; background: var(--red); border-color: var(--red); }
+.badge.lock { color: var(--amber); border-color: var(--amber-line); background: var(--amber-soft); }
+.badge.zero { color: #fff; background: #5b6876; border-color: #5b6876; }
+
+/* SKU 清单（库位结果） */
+.skulist { background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r) var(--r); }
+.si { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; border-top: 1px solid var(--line); border-left: 6px solid var(--green); }
+.si:first-child { border-top: 0; }
+.si.st-locked { border-left-color: var(--amber-line); }
+.si.st-zero { border-left-color: var(--line-strong); background: #f6f8fa; }
+.si.st-def { border-left-color: var(--red); }
+.si-sku { font-family: var(--mono); font-weight: 800; font-size: 18px; color: var(--navy); word-break: break-all; background: none; border: 0; padding: 0; text-align: left; }
+.si-name { grid-column: 1 / 2; font-size: 14px; }
+.si-meta { grid-column: 1 / -1; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.si-qty { grid-row: 1 / 3; grid-column: 2; text-align: right; }
+.si-qty b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 24px; line-height: 1.05; color: var(--green-ink); }
+.si.st-zero .si-qty b { color: #7a8796; }
+.si-qty span { font-size: 11px; color: var(--muted); font-weight: 700; display: block; }
+.si-qty small { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; text-decoration-color: rgba(11,37,69,.25); text-underline-offset: 3px; }
+.more { padding: 10px 12px; font-size: 13px; color: var(--amber); font-weight: 700; }
+
+/* 批量块 */
+.acc-block { background: #fff; border: 1px solid var(--line); border-radius: var(--r); margin: 0 0 10px; scroll-margin-top: 8px; }
+.acc-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; width: 100%; background: none; border: 0; text-align: left; border-left: 6px solid var(--line-strong); border-radius: var(--r); }
+.acc-block.oc-exact .acc-head { border-left-color: var(--green); }
+.acc-block.oc-partial .acc-head { border-left-color: var(--amber-line); }
+.acc-block.oc-none .acc-head, .acc-block.oc-nodata .acc-head { border-left-color: var(--red); }
+.acc-n { font-family: var(--mono); font-size: 13px; color: var(--muted); min-width: 2.2em; }
+.acc-main { flex: 1; min-width: 0; }
+.acc-code { font-family: var(--mono); font-weight: 800; font-size: 19px; color: var(--navy); word-break: break-all; }
+.acc-k { font-size: 12px; color: var(--muted); font-weight: 700; }
+.acc-sum { font-size: 13px; color: var(--muted); }
+.acc-qty { text-align: right; }
+.acc-qty b { display: block; font-family: var(--mono); font-size: 22px; color: var(--green-ink); font-variant-numeric: tabular-nums; }
+.acc-qty span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.acc-tw { font-size: 18px; color: var(--muted); width: 1em; text-align: center; }
+.acc-body { padding: 0 10px 10px; }
+/* 批量块标题已显示编码，块内不再重复大号编码 */
+.acc-body .sku-head .sku-code, .acc-body .loc-head .loc-code, .acc-body .loc-head > .adv-label { display: none; }
+.acc-body .sku-head, .acc-body .loc-head { border-top-width: 1px; }
+.acc-block.collapsed .acc-body { display: none; }
+.acc-block.flash { outline: 3px solid var(--green); outline-offset: 2px; animation: accflash 1.2s ease-out 1; }
+@keyframes accflash { 0% { background: var(--green-soft); } 100% { background: #fff; } }
+@media (prefers-reduced-motion: reduce) { .acc-block.flash { animation: none; } }
+
+/* 最近查询 */
+.hist { margin-top: 18px; background: #fff; border: 1px solid var(--line); border-radius: var(--r); padding: 4px 12px 8px; }
+.hist ol { list-style: none; margin: 4px 0; padding: 0; }
+.hist li { border-top: 1px solid var(--line); }
+.hist li:first-child { border-top: 0; }
+.hist button.hq { display: flex; width: 100%; align-items: center; gap: 8px; background: none; border: 0; padding: 8px 0; text-align: left; min-height: 44px; }
+.hq .mono { font-weight: 700; flex: 0 1 auto; word-break: break-all; }
+.hq .hs { color: var(--muted); font-size: 13px; flex: 1; }
+.hq time { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+.dot.oc-exact { background: var(--green); }
+.dot.oc-partial { background: var(--amber-line); }
+.dot.oc-none, .dot.oc-nodata { background: var(--red); }
+.help { margin-top: 12px; background: #fff; border: 1px solid var(--line); border-radius: var(--r); padding: 4px 12px; }
+.help ul { margin: 4px 0 10px; padding-left: 20px; font-size: 14px; color: var(--muted); }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px 12px 28px; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--navy); color: #fff; padding: 8px 14px; border-radius: var(--r); font-size: 14px; z-index: 3000;
+  pointer-events: none; max-width: 90vw; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+#toast.t-none, #toast.t-nodata { background: var(--red); }
+#toast.t-exact { background: var(--green-ink); }
+
+@media (max-width: 380px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .loc-code { font-size: 26px; }
+  .lc-loc { font-size: 23px; }
+  .brand .mark { font-size: 15px; } .brand .title { font-size: 15px; }
+}
+
+/* ==== src/styles/scanner.css ==== */
 /* ---------- 扫码层（dangdang 取景样式，内嵌全屏） ---------- */
 #scanOverlay {
   position: fixed; inset: 0; z-index: 2000; background: #000; color: #fff;
@@ -233,108 +382,127 @@ tbody tr:last-child td { border-bottom: 0; }
 #scanOverlay #bot button.on { background: #f9ab00; color: #000; }
 #scanOverlay #bot button[hidden] { display: none; }
 
-
-.data-time { font-size: 14px; font-weight: 650; margin: 0; color: var(--muted); letter-spacing: .01em; }
-.data-time b { font-variant-numeric: tabular-nums; color: var(--ink); }
-.data-sub { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
-.data-sub strong { color: var(--ink); font-weight: 600; }
-.sync-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 2px; }
-#syncBtn {
-  border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent);
-  font: inherit; font-weight: 700; font-size: 14px; padding: 0 14px; height: 40px;
-  border-radius: 10px; cursor: pointer;
-}
-#syncBtn:disabled { opacity: .65; cursor: wait; }
-#syncBtn:active { transform: scale(.98); }
-#syncStatus { font-size: 13px; color: var(--accent); }
-#syncStatus.is-err { color: var(--warn); }
-#syncStatus.is-muted { color: var(--muted); }
-.sync-help { color: var(--muted); font-size: 12px; margin: 0 0 2px; }
-#multiBar {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  margin-top: 10px;
-}
-#multiBar[hidden] { display: none !important; }
-#multiCount { font-size: 14px; font-weight: 650; }
-#multiClear {
-  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-  font: inherit; font-weight: 650; padding: 6px 14px; border-radius: 10px; cursor: pointer;
-  min-height: 36px;
-}
-#multiClear:disabled { opacity: .5; cursor: default; }
-.acc-block {
-  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
-  padding: 12px 14px 16px; margin: 0 0 14px;
-}
-.acc-block.flash { animation: accflash 1.1s ease; }
-@keyframes accflash {
-  0% { box-shadow: 0 0 0 3px rgba(31,92,77,.4); background: var(--accent-soft); }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-.acc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.acc-head h2 { margin: 0; font-size: 18px; }
-.acc-k { color: var(--muted); font-size: 13px; font-weight: 650; margin-right: 6px; }
-.acc-code { font-size: 20px; letter-spacing: .01em; word-break: break-all; }
-.acc-qty { color: var(--muted); font-size: 14px; }
-.acc-qty b { color: var(--accent); font-size: 22px; font-variant-numeric: tabular-nums; }
-.retry-btn {
-  margin-top: 12px; border: 1px solid var(--accent); background: var(--accent-soft);
-  color: var(--accent); font: inherit; font-weight: 700; padding: 8px 16px;
-  border-radius: 10px; cursor: pointer;
-}
-@media (max-width: 720px) {
-  .data-time { font-size: 12px; }
-}
-
+#scanOverlay .sp-exact { color: #5ee39b; }
+#scanOverlay .sp-none { color: #ff8a80; }
+#scanOverlay .sp-warn { color: #ffcf70; font-size: 13px; margin-top: 4px; }
+#scanOverlay .sp-hist { margin-top: 8px; border-top: 1px solid #333; padding-top: 4px; }
+#scanOverlay .sp-hrow { display: flex; gap: 8px; align-items: center; font-size: 14px; padding: 3px 0; color: #ddd; }
+#scanOverlay .sp-hrow .mono { font-weight: 700; color: #fff; }
+#scanOverlay .sp-hrow .hs { color: #aaa; font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#scanOverlay .sp-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+#scanOverlay .sp-dot.oc-exact { background: #34a853; }
+#scanOverlay .sp-dot.oc-partial { background: #fbbc04; }
+#scanOverlay .sp-dot.oc-none, #scanOverlay .sp-dot.oc-nodata { background: #ea4335; }
+#scanOverlay #scanResult.oc-exact { border-top: 4px solid #34a853; }
+#scanOverlay #scanResult.oc-partial { border-top: 4px solid #fbbc04; }
+#scanOverlay #scanResult.oc-none, #scanOverlay #scanResult.oc-nodata { border-top: 4px solid #ea4335; }
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <div class="head-line">
-      <h1>fest7 库位查询</h1>
-      <p class="data-time" id="dataTime">数据更新时间：<b>—</b></p>
-    </div>
-    <div class="stats" id="stats"></div>
-    <div class="sync-row">
-      <button type="button" id="syncBtn">一键同步</button>
-      <span id="syncStatus"></span>
-    </div>
-    <details class="help-box" id="helpBox">
-      <summary>说明</summary>
-      <p class="data-sub" id="dataMeta">正在加载库存数据…</p>
-      <p class="sync-help">一键同步会拉取服务器上最近一次整点上传的库位数据，不会触发领星 WMS 导出。页面打开期间每 10 分钟自动检查一次。</p>
-      <p class="hint-row">手机请用系统浏览器（Chrome / Safari）打开；微信或企业微信内置浏览器的摄像头权限可能不稳定。扫码需要 https。扫码枪对准输入框扫描后回车即可。勾选「多SKU连续查询」后，每次扫码或回车会把结果追加在下方。默认只显示精确匹配；勾选「部分匹配」可查看包含关键词的相近结果。</p>
-    </details>
-    <div class="controls">
-      <div class="modes" role="tablist" aria-label="查询方式">
-        <button type="button" id="mode-auto" aria-pressed="true">自动识别</button>
-        <button type="button" id="mode-sku" aria-pressed="false">搜 SKU</button>
-        <button type="button" id="mode-loc" aria-pressed="false">搜库位</button>
-      </div>
-      <div class="search">
-        <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="扫描或输入 SKU、条码或库位" autofocus>
-        <button type="button" class="clear" id="clear" hidden title="清除">×</button>
-      </div>
-      <div class="scan-actions">
-        <label class="cont-lab"><input type="checkbox" id="multiSku"> 多SKU连续查询</label>
-        <label class="cont-lab"><input type="checkbox" id="partialMatch"> 部分匹配</label>
-        <button type="button" id="scanBtn">📷 扫码</button>
-        <label class="cont-lab"><input type="checkbox" id="continuous"> <span id="contLabel">连续扫描</span></label>
-      </div>
-    </div>
-    <div id="multiBar" hidden>
-      <span id="multiCount">已查询 0 个</span>
-      <button type="button" id="multiClear">清空</button>
-    </div>
-    <div id="httpsWarn" hidden></div>
+  <div class="appbar">
+    <div class="brand"><span class="mark">FEST7</span><span class="title">库位查询</span><span class="ver">V2.0</span></div>
+    <a href="#statusCard" id="dataPill" class="pill lv-none"><span class="dot"></span><span id="pillText">加载中…</span></a>
   </div>
 </header>
+
 <main class="wrap">
-  <div id="resultsStart"></div>
-  <div id="summary"></div>
-  <div id="result"></div>
+  <div id="freshBanner" class="banner" hidden role="alert"></div>
+
+  <div class="home">
+    <section class="card entry" aria-label="查询入口">
+      <button type="button" id="scanBtn" class="btn-scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8" stroke-width="1.6"/></svg>
+        扫码查询
+      </button>
+      <form id="qForm" class="qform" autocomplete="off" action="#">
+        <div class="qbox">
+          <input id="q" type="text" inputmode="text" enterkeyhint="search" autocapitalize="characters" autocorrect="off" spellcheck="false"
+            placeholder="扫描或输入 SKU、条码或库位" aria-label="SKU、条码或库位">
+          <button type="button" id="clear" aria-label="清除" hidden>×</button>
+        </div>
+        <button type="submit" id="goBtn">查询</button>
+      </form>
+      <div class="toggles">
+        <label class="tgl" for="multiSku"><input type="checkbox" id="multiSku"><span><b>批量查询</b><small>结果按扫描顺序累加</small></span></label>
+        <label class="tgl" for="continuous"><input type="checkbox" id="continuous"><span><b id="contLabel">连续扫码</b><small>相机不关，可连扫多个</small></span></label>
+      </div>
+      <details class="adv" id="adv">
+        <summary>高级设置</summary>
+        <div class="adv-body">
+          <div>
+            <div class="adv-label">查询类型</div>
+            <div class="seg" role="group" aria-label="查询类型">
+              <button type="button" id="mode-auto" aria-pressed="true">自动识别</button>
+              <button type="button" id="mode-sku" aria-pressed="false">搜 SKU</button>
+              <button type="button" id="mode-loc" aria-pressed="false">搜库位</button>
+            </div>
+          </div>
+          <label class="opt"><input type="checkbox" id="partialMatch"><span>部分匹配 <small>默认关闭：只显示精确匹配</small></span></label>
+          <label class="opt"><input type="checkbox" id="optSound"><span>提示音 <small>精确匹配 / 无匹配 / 数据不可用 声音不同</small></span></label>
+          <label class="opt"><input type="checkbox" id="optVibrate"><span>震动 <small>仅部分安卓手机支持</small></span></label>
+        </div>
+      </details>
+      <div id="httpsWarn" class="banner warn" hidden></div>
+    </section>
+
+    <section class="card status" id="statusCard" aria-label="数据状态">
+      <div class="st-line">
+        <span class="dot" id="freshDot"></span>
+        <span class="st-k">WMS 快照</span><b class="st-v" id="dataTime">—</b>
+        <span class="tag" id="freshTag">—</span>
+      </div>
+      <div class="st-line small muted" id="dataAge">非实时数据</div>
+      <div class="st-line">
+        <span class="st-k">上次检查服务器</span><b class="st-v" id="lastCheck">—</b>
+        <button type="button" id="syncBtn">一键同步</button>
+        <span id="syncStatus" role="status" aria-live="polite"></span>
+      </div>
+      <details>
+        <summary>数据说明</summary>
+        <p>数据更新时间 = WMS 快照时间（意大利时间）。数据来自领星 WMS「按库位查询」导出，是<b>快照，不是实时 WMS 查询</b>。自动同步在意大利时间周一至周六 8:30–18:30 每小时上传一次。</p>
+        <p>「一键同步」只会重新拉取最近一次整点上传的数据，不会触发领星 WMS 导出。页面打开期间每 10 分钟自动检查一次，切回页面时也会检查。</p>
+        <p>超过一次整点没更新会显示黄色提醒；超过 24 小时会显示红色警告。重要操作请以 WMS 为准。</p>
+        <div class="stats" id="stats"></div>
+      </details>
+    </section>
+  </div>
+
+  <div id="multiBar" hidden>
+    <span id="multiCount">批量 0 条</span>
+    <button type="button" class="btn-s" id="expandAll">全部展开</button>
+    <button type="button" class="btn-s" id="collapseAll">全部折叠</button>
+    <button type="button" class="btn-s danger" id="multiClear">清空</button>
+  </div>
+
+  <section id="results" aria-live="polite">
+    <div id="summary"></div>
+    <div id="result"></div>
+  </section>
+
+  <details class="hist" id="histBox">
+    <summary>最近查询（<span id="histCount">0</span>）</summary>
+    <ol id="history"></ol>
+    <button type="button" class="btn-s" id="histClear">清空记录</button>
+  </details>
+
+  <details class="help">
+    <summary>说明</summary>
+    <ul>
+      <li>默认「自动识别」：完整库位号只显示该库位上的 SKU（BB-1-4-2 不会和 BBB-1-4-2 混在一起）；完整 SKU 或条码只显示该 SKU 的库位。</li>
+      <li>默认只显示精确匹配（SKU / 条码 / 库位需完整一致，不区分大小写）。在「高级设置」勾选「部分匹配」才显示包含关键词的相近结果。</li>
+      <li><b>批量查询</b>（原「多SKU连续查询」）：每次扫码或回车把结果追加在下面，按扫描顺序排列；重复扫到同一个码会定位并高亮已有结果，不会重复添加。</li>
+      <li><b>连续扫码</b>：相机识别后不关闭，可以接着扫下一个；同一个码 1.5 秒内不重复识别。可与批量查询同时打开。</li>
+      <li>扫码枪：扫完自动回车即查；查询后输入框清空，可直接扫下一个。电脑上输入框不在焦点时也能接收扫码枪。</li>
+      <li>摄像头需要 https，请用 Chrome 或 Safari 打开（不要在微信里打开）。</li>
+      <li>数字说明：「可用」= 可用库存；「锁定」= 已被订单占用；「次品」= 库存属性为次品，单独标红。可用总库存包含次品可用数，次品会单独注明。</li>
+    </ul>
+  </details>
+
+  <footer>FEST7 库位查询 V2.0 · 数据来自领星 WMS 导出快照，非实时 · 含客户名称和库存，请勿外传</footer>
 </main>
+
+<div id="toast" hidden role="status"></div>
 
 <div id="scanOverlay" hidden>
   <div id="wrap">
@@ -349,7 +517,7 @@ tbody tr:last-child td { border-bottom: 0; }
     <div id="scanResult" hidden></div>
     <div id="zoomRow" hidden><span id="zl"></span><input id="zoom" type="range"><span id="zv"></span></div>
     <div id="eng"></div>
-    <div id="contBar"><label><input type="checkbox" id="bCont"> 连续扫描</label></div>
+    <div id="contBar"><label><input type="checkbox" id="bCont"> <span>连续扫码</span></label></div>
     <div id="bot">
       <button type="button" id="bCancel"></button>
       <button type="button" id="bTorch" hidden></button>
@@ -358,8 +526,8 @@ tbody tr:last-child td { border-bottom: 0; }
   </div>
 </div>
 
-<script id="payload" type="application/json">null</script>
 <script>
+/* ==== src/core/lookup-core.js ==== */
 /* fest7 库位查询：检索与自动识别（页面与测试共用） */
 (function (root) {
   'use strict';
@@ -614,7 +782,473 @@ tbody tr:last-child td { border-bottom: 0; }
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
 <script>
-/* 改编自 dangdang 上传页 scannerMain()：内嵌到本页，不新开窗口、不 postMessage。
+/* ==== src/core/data-state.js ==== */
+/* FEST7 库位查询 V2：数据校验、版本判断、新鲜度（页面与测试共用，纯函数） */
+(function (root) {
+  'use strict';
+
+  /** 页面支持的 data.json 结构版本。旧文件没有 meta.schemaVersion，视为 1。 */
+  var SUPPORTED_SCHEMA = 1;
+  var ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+  var LIST_FIELDS = ['skus', 'skuBarcodes', 'names', 'customers', 'locations', 'areas', 'stockProperties', 'rows'];
+
+  /* ---------- 新鲜度规则（与每小时同步任务的排班一致） ----------
+     同步排班：意大利时间周一至周六 08:30–18:30 每小时一次（CRON_TZ=Europe/Rome 30 8-18 * * 1-6）。
+     SCHEDULE_GRACE（30 分钟）：整点任务导出+上传所需时间，过了这个时间还没新数据才算错过一次。
+     「应有快照」= 不晚于 (现在 − GRACE) 的最近一次排班时间。
+     behind = 应有快照时间 − 实际快照时间。
+       fresh  : behind ≤ 60 分钟（最多晚一班，例如 10:50 时数据为 09:35 → 正常）
+       例：周二 11:05 时最新数据仍是 08:35（约 2.5 小时前，错过两班）→ warn
+       warn   : behind > 60 分钟（至少错过一次同步，数据实际已超过约 2 小时）
+       strong : behind > 60 分钟 且 数据年龄 > 24 小时
+       future : 快照时间比本机时间晚 10 分钟以上（手机时间不对或数据异常）→ 按 warn 显示
+       invalid: 没有可解析的快照时间 → 按 strong 显示
+     周日和夜间没有排班，因此周一 08:00 看到周六 18:35 的数据仍是「正常」。 */
+  var SCHEDULE = { days: [1, 2, 3, 4, 5, 6], firstHour: 8, lastHour: 18, minute: 30, timeZone: 'Europe/Rome' };
+  var SCHEDULE_GRACE_MS = 30 * 60 * 1000;
+  var BEHIND_WARN_MS = 60 * 60 * 1000;
+  var STRONG_AGE_MS = 24 * 60 * 60 * 1000;
+  var FUTURE_TOLERANCE_MS = 10 * 60 * 1000;
+  /** 自动检查每 10 分钟一次；超过 25 分钟没有一次成功检查，就提示「连不上服务器」。 */
+  var CHECK_STALE_MS = 25 * 60 * 1000;
+
+  function isInt(v) { return typeof v === 'number' && isFinite(v) && Math.floor(v) === v; }
+
+  /**
+   * 严格校验 data.json。返回 { ok, errors: [], warnings: [], schemaVersion }。
+   * 与 build_data.py 的 validate_payload 规则一致（行 9 列、索引不越界、数量为整数、计数一致）。
+   */
+  function validateData(data) {
+    var errors = [];
+    var warnings = [];
+    var out = { ok: false, errors: errors, warnings: warnings, schemaVersion: 0 };
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      errors.push('不是 JSON 对象');
+      return out;
+    }
+    var meta = data.meta;
+    if (!meta || typeof meta !== 'object') {
+      errors.push('缺少 meta');
+      return out;
+    }
+    var ver = meta.schemaVersion == null ? 1 : meta.schemaVersion;
+    out.schemaVersion = ver;
+    if (!isInt(ver) || ver < 1) errors.push('meta.schemaVersion 无效：' + ver);
+    else if (ver > SUPPORTED_SCHEMA) errors.push('数据版本 v' + ver + ' 高于本页面支持的 v' + SUPPORTED_SCHEMA + '，请刷新页面获取新版');
+    for (var f = 0; f < LIST_FIELDS.length; f++) {
+      if (!Array.isArray(data[LIST_FIELDS[f]])) errors.push('缺少列表字段 ' + LIST_FIELDS[f]);
+    }
+    if (errors.length) return out;
+    if (meta.warehouse !== 'fest7') errors.push('meta.warehouse 应为 fest7，实际为 ' + meta.warehouse);
+    var snap = String(meta.snapshotAt || '');
+    if (!ISO_RE.test(snap) || isNaN(Date.parse(snap))) errors.push('meta.snapshotAt 不是带时区的 ISO 时间：' + (snap || '空'));
+    var rows = data.rows;
+    if (!rows.length) errors.push('rows 为空');
+    if (meta.rowCount !== rows.length) errors.push('meta.rowCount ' + meta.rowCount + ' ≠ 实际行数 ' + rows.length);
+    if (data.skuBarcodes.length !== data.skus.length) errors.push('skuBarcodes 与 skus 长度不一致');
+    var lens = [data.skus.length, data.names.length, data.customers.length, data.locations.length, data.areas.length, data.stockProperties.length];
+    var labels = ['sku', '品名', '客户', '库位', '库区', '库存属性'];
+    var badRows = 0;
+    var firstBad = '';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var why = '';
+      if (!Array.isArray(r) || r.length !== 9) why = '不是 9 列';
+      else {
+        for (var k = 0; k < 6 && !why; k++) {
+          if (!isInt(r[k]) || r[k] < 0 || r[k] >= lens[k]) why = labels[k] + '索引越界';
+        }
+        for (var q = 6; q < 9 && !why; q++) {
+          if (!isInt(r[q])) why = '数量不是整数';
+        }
+      }
+      if (why) {
+        badRows++;
+        if (!firstBad) firstBad = '第 ' + (i + 1) + ' 行' + why;
+      }
+    }
+    if (badRows) errors.push(badRows + ' 行数据无效（' + firstBad + '）');
+    for (var s = 0; s < data.skus.length; s++) {
+      if (typeof data.skus[s] !== 'string' || !data.skus[s]) { errors.push('skus 中有空值'); break; }
+    }
+    for (var l = 0; l < data.locations.length; l++) {
+      if (typeof data.locations[l] !== 'string' || !data.locations[l]) { errors.push('locations 中有空值'); break; }
+    }
+    var counts = [['uniqueSkus', data.skus.length], ['uniqueLocations', data.locations.length],
+      ['uniqueCustomers', data.customers.length], ['uniqueAreas', data.areas.length]];
+    for (var c = 0; c < counts.length; c++) {
+      var v = meta[counts[c][0]];
+      if (v != null && v !== counts[c][1]) errors.push('meta.' + counts[c][0] + ' ' + v + ' ≠ ' + counts[c][1]);
+    }
+    if (meta.live === true) warnings.push('meta.live 为 true，但本页面数据始终是快照');
+    out.ok = errors.length === 0;
+    return out;
+  }
+
+  /* ---------- 罗马时间工具 ---------- */
+  var dtfCache = {};
+  function zoneParts(ms, timeZone) {
+    var tz = timeZone || 'Europe/Rome';
+    var dtf = dtfCache[tz] || (dtfCache[tz] = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz, weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    }));
+    var parts = dtf.formatToParts(new Date(ms));
+    var m = {};
+    for (var i = 0; i < parts.length; i++) m[parts[i].type] = parts[i].value;
+    var wd = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[m.weekday];
+    return { weekday: wd, year: +m.year, month: +m.month, day: +m.day, hour: (+m.hour) % 24, minute: +m.minute };
+  }
+
+  /** 不晚于 atMs 的最近一次排班同步时间（毫秒）。罗马与 UTC 只差整小时，因此 xx:30 在两种时区下分钟数相同。 */
+  function lastScheduledRun(atMs, schedule) {
+    var sc = schedule || SCHEDULE;
+    var HOUR = 3600 * 1000;
+    var t = Math.floor(atMs / 60000) * 60000;
+    var minUtc = new Date(t).getUTCMinutes();
+    var back = (minUtc - sc.minute + 60) % 60;
+    var cand = t - back * 60000;
+    for (var i = 0; i < 24 * 9; i++) {
+      var p = zoneParts(cand, sc.timeZone);
+      if (p.minute === sc.minute && sc.days.indexOf(p.weekday) >= 0 && p.hour >= sc.firstHour && p.hour <= sc.lastHour) return cand;
+      cand -= HOUR;
+    }
+    return 0;
+  }
+
+  /**
+   * 计算新鲜度。返回 { level: 'fresh'|'warn'|'strong', reason, ageMs, behindMs, expectedMs }
+   * reason: 'ok' | 'behind' | 'old' | 'future' | 'invalid'
+   */
+  function freshness(snapshotMs, nowMs) {
+    if (!snapshotMs || isNaN(snapshotMs)) return { level: 'strong', reason: 'invalid', ageMs: NaN, behindMs: NaN, expectedMs: 0 };
+    var age = nowMs - snapshotMs;
+    if (age < -FUTURE_TOLERANCE_MS) return { level: 'warn', reason: 'future', ageMs: age, behindMs: 0, expectedMs: 0 };
+    var expected = lastScheduledRun(nowMs - SCHEDULE_GRACE_MS);
+    var behind = expected ? expected - snapshotMs : 0;
+    var res = { level: 'fresh', reason: 'ok', ageMs: age, behindMs: behind, expectedMs: expected };
+    if (behind > BEHIND_WARN_MS) {
+      if (age > STRONG_AGE_MS) { res.level = 'strong'; res.reason = 'old'; }
+      else { res.level = 'warn'; res.reason = 'behind'; }
+    }
+    return res;
+  }
+
+  function formatAge(ms) {
+    if (!(ms >= 0)) return '';
+    var min = Math.floor(ms / 60000);
+    if (min < 1) return '刚刚';
+    if (min < 60) return min + ' 分钟前';
+    var h = Math.floor(min / 60);
+    if (h < 48) return h + ' 小时' + (min % 60 && h < 6 ? ' ' + (min % 60) + ' 分' : '') + '前';
+    return Math.floor(h / 24) + ' 天前';
+  }
+
+  function formatClock(ms, timeZone, withDate) {
+    if (!ms) return '—';
+    var p = zoneParts(ms, timeZone || 'Europe/Rome');
+    var hm = (p.hour < 10 ? '0' : '') + p.hour + ':' + (p.minute < 10 ? '0' : '') + p.minute;
+    if (!withDate) return hm;
+    return (p.month < 10 ? '0' : '') + p.month + '-' + (p.day < 10 ? '0' : '') + p.day + ' ' + hm;
+  }
+
+  /** 新鲜度提示文案（中文）。 */
+  function freshnessText(fr, snapLabel) {
+    if (fr.reason === 'invalid') return { short: '时间未知', long: '数据没有可识别的快照时间，无法判断是否过期，请以 WMS 为准并联系系统组。' };
+    if (fr.reason === 'future') return { short: '时间异常', long: '数据快照时间（' + snapLabel + '）比本机时间还晚，请检查手机日期时间是否正确。' };
+    if (fr.level === 'strong') return { short: '已过期', long: '数据已超过 24 小时没有更新（快照 ' + snapLabel + '，' + formatAge(fr.ageMs) + '）。库存很可能已变化，请以 WMS 为准，并通知系统组检查自动同步。' };
+    if (fr.level === 'warn') return { short: '未按时更新', long: '数据没有按时更新（快照 ' + snapLabel + '，' + formatAge(fr.ageMs) + '，已错过至少一次整点同步）。库存可能已变化，重要操作请以 WMS 为准。' };
+    return { short: '正常', long: '' };
+  }
+
+  /** 服务器检查状态：最近一次成功检查是否太久以前。 */
+  function checkState(lastOkMs, nowMs) {
+    if (!lastOkMs) return { stale: true, ageMs: NaN };
+    var age = nowMs - lastOkMs;
+    return { stale: age > CHECK_STALE_MS, ageMs: age };
+  }
+
+  var api = {
+    SUPPORTED_SCHEMA: SUPPORTED_SCHEMA,
+    SCHEDULE: SCHEDULE,
+    SCHEDULE_GRACE_MS: SCHEDULE_GRACE_MS,
+    BEHIND_WARN_MS: BEHIND_WARN_MS,
+    STRONG_AGE_MS: STRONG_AGE_MS,
+    FUTURE_TOLERANCE_MS: FUTURE_TOLERANCE_MS,
+    CHECK_STALE_MS: CHECK_STALE_MS,
+    validateData: validateData,
+    zoneParts: zoneParts,
+    lastScheduledRun: lastScheduledRun,
+    freshness: freshness,
+    freshnessText: freshnessText,
+    formatAge: formatAge,
+    formatClock: formatClock,
+    checkState: checkState
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.DataState = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script>
+/* ==== src/core/view-model.js ==== */
+/* FEST7 库位查询 V2：结果视图模型（分组、排序、库存状态、批量、历史、防重复）。
+   只整理 LookupCore.search 的结果，不改变任何匹配规则。 */
+(function (root) {
+  'use strict';
+  var Core = root.LookupCore || (typeof require === 'function' ? require('./lookup-core.js') : null);
+
+  var collator = (typeof Intl !== 'undefined' && Intl.Collator)
+    ? new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
+    : { compare: function (a, b) { return a < b ? -1 : a > b ? 1 : 0; } };
+  function natural(a, b) { return collator.compare(String(a), String(b)); }
+
+  var SORTS = {
+    sku: [ // SKU 结果：每行是一个库位
+      { key: 'avail', label: '可用数量' },
+      { key: 'loc', label: '库位编号' },
+      { key: 'total', label: '总库存' }
+    ],
+    loc: [ // 库位结果：每行是一个 SKU
+      { key: 'avail', label: '可用数量' },
+      { key: 'sku', label: 'SKU' },
+      { key: 'total', label: '总库存' }
+    ]
+  };
+
+  function validSort(view, key) {
+    var list = SORTS[view] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return key;
+    return 'avail';
+  }
+
+  /** 排序（稳定，不修改原数组）。avail/total 降序；同数量时按库位、SKU 自然顺序，保证结果确定。 */
+  function sortRows(rows, view, key) {
+    var k = validSort(view, key);
+    var list = rows.slice();
+    function tie(a, b) {
+      return view === 'loc'
+        ? (natural(a.sku, b.sku) || natural(a.prop, b.prop))
+        : (natural(a.location, b.location) || natural(a.prop, b.prop));
+    }
+    list.sort(function (a, b) {
+      if (k === 'avail') return (b.avail - a.avail) || tie(a, b);
+      if (k === 'total') return (b.total - a.total) || tie(a, b);
+      if (k === 'loc') return natural(a.location, b.location) || natural(a.prop, b.prop);
+      if (k === 'sku') return natural(a.sku, b.sku) || natural(a.prop, b.prop);
+      return 0;
+    });
+    return list;
+  }
+
+  /** 单行库存状态：次品 / 无可用（全部锁定）/ 部分锁定 / 库存为零。 */
+  function rowState(r) {
+    var defective = r.prop === '次品';
+    return {
+      defective: defective,
+      zeroTotal: r.total === 0,
+      zeroAvail: r.avail === 0,
+      locked: r.locked > 0,
+      ok: !defective && r.avail > 0 && r.locked === 0
+    };
+  }
+
+  function totalsOf(rows) {
+    var t = { rows: rows.length, total: 0, avail: 0, locked: 0, defectiveRows: 0, defectiveAvail: 0, defectiveTotal: 0, zeroAvailRows: 0, lockedRows: 0 };
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      t.total += r.total; t.avail += r.avail; t.locked += r.locked;
+      if (r.prop === '次品') { t.defectiveRows++; t.defectiveAvail += r.avail; t.defectiveTotal += r.total; }
+      if (r.avail === 0) t.zeroAvailRows++;
+      if (r.locked > 0) t.lockedRows++;
+    }
+    return t;
+  }
+
+  function uniq(rows, field) {
+    var seen = {}, out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var v = rows[i][field];
+      if (!seen[v]) { seen[v] = 1; out.push(v); }
+    }
+    return out;
+  }
+
+  /**
+   * 分组：view 'sku' 按 SKU 分组（组内每行一个库位）；view 'loc' 按库位分组（组内每行一个 SKU）。
+   * 组顺序 = 首次出现顺序（与 V1 数据顺序一致）；组内按 sortKey 排序。
+   */
+  function groupRows(rows, view, sortKey) {
+    var field = view === 'loc' ? 'location' : 'sku';
+    var map = {}, order = [];
+    for (var i = 0; i < rows.length; i++) {
+      var k = rows[i][field];
+      if (!map[k]) { map[k] = []; order.push(k); }
+      map[k].push(rows[i]);
+    }
+    return order.map(function (k) {
+      var list = map[k];
+      var g = {
+        key: k,
+        view: view,
+        rows: sortRows(list, view, sortKey),
+        totals: totalsOf(list)
+      };
+      if (view === 'loc') {
+        g.location = k;
+        g.areas = uniq(list, 'area');
+        g.skuCount = uniq(list, 'sku').length;
+      } else {
+        g.sku = k;
+        g.barcodes = uniq(list, 'barcode').filter(function (b) { return b !== k; });
+        g.names = uniq(list, 'name');
+        g.customers = uniq(list, 'customer');
+        g.locCount = uniq(list, 'location').length;
+      }
+      return g;
+    });
+  }
+
+  /**
+   * 整理一次查询的显示内容（规则与 V1 renderResultBody 一致）：
+   *  - 未勾「部分匹配」：只显示精确匹配；没有精确匹配时 status='none'，hintCount 为相近结果数。
+   *  - 勾选后：SKU/库位模式显示「精确 + 部分」；自动识别未精确命中时分别显示库位部分匹配、SKU/条码部分匹配。
+   * status: 'empty' | 'exact' | 'partial' | 'none'
+   */
+  function buildView(parts, allowPartial, sortKeys) {
+    var sk = sortKeys || {};
+    var out = { status: 'empty', query: parts ? parts.query : '', resolvedMode: parts ? parts.resolvedMode : 'auto', sections: [], hintCount: 0, totals: null };
+    if (!parts || !parts.q) return out;
+    var sections = [];
+    function add(kind, view, label, rows) {
+      if (!rows || !rows.length) return;
+      sections.push({ kind: kind, view: view, label: label, rows: rows, totals: totalsOf(rows), groups: groupRows(rows, view, sk[view]) });
+    }
+    var exact = parts.exact || [];
+    if (parts.resolvedMode !== 'both') {
+      var view = parts.resolvedMode === 'loc' ? 'loc' : 'sku';
+      add('exact', view, '精确匹配', exact);
+      if (allowPartial) add('partial', view, '部分匹配', parts.partial || []);
+    } else if (allowPartial) {
+      add('partial', 'loc', '库位部分匹配', parts.partialLoc || []);
+      add('partial', 'sku', 'SKU / 条码部分匹配', parts.partialSku || []);
+    }
+    out.sections = sections;
+    out.totals = Core ? Core.resultTotals(parts, !!allowPartial) : null;
+    if (exact.length) out.status = 'exact';
+    else if (sections.length) out.status = 'partial';
+    else {
+      out.status = 'none';
+      out.hintCount = allowPartial ? 0 : (Core ? Core.partialHitCount(parts) : 0);
+    }
+    return out;
+  }
+
+  /**
+   * 扫码 / 回车后的反馈类型：
+   *  'nodata'  数据不可用（未加载成功）
+   *  'exact'   库存精确匹配
+   *  'partial' 无精确匹配，但已勾选部分匹配且有相近结果
+   *  'none'    无匹配
+   */
+  function scanOutcome(parts, allowPartial, hasData) {
+    if (!hasData) return 'nodata';
+    if (!parts || !parts.q) return 'none';
+    if (parts.exact && parts.exact.length) return 'exact';
+    if (allowPartial && Core && Core.displayRows(parts, true).length) return 'partial';
+    return 'none';
+  }
+
+  /** 一行摘要（用于最近扫码列表、扫码层面板、批量块标题）。 */
+  function outcomeSummary(parts, allowPartial) {
+    if (!parts || !parts.q) return '';
+    var rows = Core.displayRows(parts, !!allowPartial);
+    if (!rows.length) return '';
+    var t = totalsOf(rows);
+    var type = parts.resolvedMode;
+    if (type === 'loc') return uniq(rows, 'sku').length + ' 个 SKU · 可用 ' + t.avail;
+    if (type === 'sku') return uniq(rows, 'location').length + ' 个库位 · 可用 ' + t.avail;
+    return rows.length + ' 条相近记录';
+  }
+
+  /** 同一码在冷却时间内再次出现（扫码枪连按回车、相机重复识别）→ 忽略，不重绘、不滚动。 */
+  function isRepeat(last, key, nowMs, cooldownMs) {
+    if (!last || !key) return false;
+    return last.key === key && (nowMs - last.at) < (cooldownMs == null ? 1500 : cooldownMs);
+  }
+
+  /** 最近查询：新的在前；与上一条相同时只更新，不重复添加；最多 cap 条。 */
+  function pushHistory(list, entry, cap) {
+    var max = cap || 20;
+    var src = Array.isArray(list) ? list : [];
+    var key = Core.normalize(entry && entry.query);
+    if (!key) return src.slice();
+    var e = {};
+    for (var p in entry) if (Object.prototype.hasOwnProperty.call(entry, p)) e[p] = entry[p];
+    e.key = key;
+    var out = [e];
+    for (var i = 0; i < src.length && out.length < max; i++) {
+      if (src[i].key !== key) out.push(src[i]);
+    }
+    return out;
+  }
+
+  /** 批量：全部折叠 / 全部展开（返回新的折叠表 key → true）。 */
+  function setAllCollapsed(blocks, collapsed) {
+    var m = {};
+    if (collapsed) for (var i = 0; i < blocks.length; i++) m[blocks[i].key] = true;
+    return m;
+  }
+  function toggleCollapsed(map, key) {
+    var m = {};
+    for (var k in map) if (map[k]) m[k] = true;
+    if (m[key]) delete m[key]; else m[key] = true;
+    return m;
+  }
+  /** 清空确认：3 条及以上需要再点一次确认。 */
+  function clearNeedsConfirm(n) { return n >= 3; }
+
+  /**
+   * 扫码枪键盘输入缓冲（焦点不在输入框时也能接收扫码枪）。
+   * state: { buf, at }；返回 { state, submit } — submit 为要查询的字符串或 ''。
+   */
+  function wedgeKey(state, key, nowMs, gapMs) {
+    var st = state && (nowMs - state.at) <= (gapMs || 1000) ? state : { buf: '', at: 0 };
+    if (key === 'Enter') {
+      var text = st.buf.trim();
+      return { state: { buf: '', at: 0 }, submit: text };
+    }
+    if (typeof key === 'string' && key.length === 1) {
+      return { state: { buf: st.buf + key, at: nowMs }, submit: '' };
+    }
+    return { state: st, submit: '' };
+  }
+
+  var api = {
+    SORTS: SORTS,
+    natural: natural,
+    validSort: validSort,
+    sortRows: sortRows,
+    rowState: rowState,
+    totalsOf: totalsOf,
+    groupRows: groupRows,
+    buildView: buildView,
+    scanOutcome: scanOutcome,
+    outcomeSummary: outcomeSummary,
+    isRepeat: isRepeat,
+    pushHistory: pushHistory,
+    setAllCollapsed: setAllCollapsed,
+    toggleCollapsed: toggleCollapsed,
+    clearNeedsConfirm: clearNeedsConfirm,
+    wedgeKey: wedgeKey
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.ViewModel = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script>
+/* ==== src/scanner/scanner.js ==== */
+/* V2：沿用 V1 扫码层（陆逊 dangdang 引擎参数不变），仅新增 C.silent 开关。
+   改编自 dangdang 上传页 scannerMain()：内嵌到本页，不新开窗口、不 postMessage。
    成功回调通过 window.__DD_CFG.onSuccess；连续扫描时不关摄像头。
    不要截取扫码字符串。 */
 function scannerMain() {
@@ -888,8 +1522,11 @@ function scannerMain() {
     text = String(text);
     // 不截取、不改写扫码原文（与 dangdang 批次号处理不同）
     $('box').classList.add('ok');
-    try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
-    beep();
+    // V2：页面可接管提示（按查询结果区分精确匹配 / 无匹配 / 数据不可用），此时扫码层不再重复提示
+    if (!C.silent) {
+      try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+      beep();
+    }
     top('✔ ' + text);
     try { if (camId) localStorage.setItem('dd_scan_cam', camId); } catch (e) {}
     lastSuccess = { text: text, at: Date.now() };
@@ -973,18 +1610,353 @@ function scannerMain() {
   });
   startCam('');
 }
-
 </script>
 <script>
-/* fest7 库位查询页面逻辑 */
+/* ==== src/app/util.js ==== */
+/* FEST7 库位查询 V2：页面通用工具 */
 (function () {
   'use strict';
+  var KW = window.KW = window.KW || {};
+  KW.CFG = window.KW_CONFIG || {};
+  KW.APP_VERSION = '2.0.0';
+
+  KW.$ = function (id) { return document.getElementById(id); };
+  KW.esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  KW.fmt = function (n) { return Number(n).toLocaleString('zh-CN'); };
+
+  KW.store = {
+    get: function (k, def) {
+      try { var v = localStorage.getItem(k); return v == null ? def : v; } catch (e) { return def; }
+    },
+    set: function (k, v) {
+      try { localStorage.setItem(k, v); return true; } catch (e) { return false; }
+    },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} },
+    bool: function (k, def) {
+      var v = KW.store.get(k, null);
+      return v == null ? !!def : v === '1';
+    },
+    setBool: function (k, on) { KW.store.set(k, on ? '1' : '0'); }
+  };
+
+  KW.isCoarse = function () {
+    try { return window.matchMedia('(pointer: coarse)').matches; } catch (e) { return false; }
+  };
+
+  var toastTimer = 0;
+  KW.toast = function (text, kind) {
+    var el = KW.$('toast');
+    if (!el) return;
+    el.textContent = text;
+    el.className = kind ? 't-' + kind : '';
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.hidden = true; }, 1600);
+  };
+})();
+</script>
+<script>
+/* ==== src/app/feedback.js ==== */
+/* FEST7 库位查询 V2：扫码反馈（提示音 / 震动，可在高级设置里开关）
+   识别成功：扫码层取景框变绿、顶部显示条码（扫码层自带）。
+   结果反馈：精确匹配 = 一声高音；部分匹配 = 两声中音；无匹配 = 两声低音；数据不可用 = 一声长低音。 */
+(function () {
+  'use strict';
+  var KW = window.KW;
+  var ctx = null;
+  var SOUND_KEY = 'kuwei_sound';
+  var VIBRATE_KEY = 'kuwei_vibrate';
+
+  var PATTERNS = {
+    exact:   { tones: [[1800, 0.12]], vib: 80 },
+    partial: { tones: [[1200, 0.09], [1200, 0.09]], vib: [60, 60, 60] },
+    none:    { tones: [[440, 0.13], [440, 0.13]], vib: [120, 80, 120] },
+    nodata:  { tones: [[220, 0.45]], vib: [400] }
+  };
+
+  function unlock() {
+    try {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) {}
+  }
+  function play(tones) {
+    try {
+      unlock();
+      if (!ctx) return;
+      var t = ctx.currentTime + 0.01;
+      for (var i = 0; i < tones.length; i++) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = tones[i][0] < 600 ? 'square' : 'sine';
+        o.frequency.value = tones[i][0];
+        g.gain.value = tones[i][0] < 600 ? 0.08 : 0.15;
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + tones[i][1]);
+        t += tones[i][1] + 0.07;
+      }
+    } catch (e) {}
+  }
+
+  KW.feedback = {
+    PATTERNS: PATTERNS,
+    soundOn: function () { return KW.store.bool(SOUND_KEY, true); },
+    vibrateOn: function () { return KW.store.bool(VIBRATE_KEY, true); },
+    setSound: function (on) { KW.store.setBool(SOUND_KEY, on); },
+    setVibrate: function (on) { KW.store.setBool(VIBRATE_KEY, on); },
+    unlock: unlock,
+    signal: function (outcome) {
+      var p = PATTERNS[outcome];
+      if (!p) return;
+      KW.lastSignal = outcome; // 供端到端测试检查
+      if (KW.feedback.vibrateOn()) { try { navigator.vibrate && navigator.vibrate(p.vib); } catch (e) {} }
+      if (KW.feedback.soundOn()) play(p.tones);
+    }
+  };
+})();
+</script>
+<script>
+/* ==== src/app/render.js ==== */
+/* FEST7 库位查询 V2：结果 HTML（只读 ViewModel，不做匹配） */
+(function () {
+  'use strict';
+  var KW = window.KW, VM = window.ViewModel, esc = KW.esc, fmt = KW.fmt;
+  var MAX_ROWS = 400; // 与 V1 一致：单个结果区最多渲染 400 条
+
+  var TYPE_LABEL = { sku: 'SKU / 条码', loc: '库位', both: '库位 + SKU', auto: '' };
+
+  function stateClass(r) {
+    var s = VM.rowState(r);
+    if (s.defective) return 'st-def';
+    if (s.zeroAvail || s.zeroTotal) return 'st-zero';
+    if (s.locked) return 'st-locked';
+    return 'st-ok';
+  }
+  function rowBadges(r) {
+    var s = VM.rowState(r), b = '';
+    if (s.defective) b += '<span class="badge def">次品</span>';
+    if (s.zeroTotal) b += '<span class="badge zero">库存为零</span>';
+    else if (s.zeroAvail) b += '<span class="badge zero">无可用</span>';
+    if (s.locked) b += '<span class="badge lock">锁定 ' + fmt(r.locked) + '</span>';
+    return b;
+  }
+  function groupFlags(t, unit) {
+    var f = '';
+    if (t.defectiveRows) f += '<span class="badge def">次品 ' + t.defectiveRows + ' 个' + unit + ' · 可用 ' + fmt(t.defectiveAvail) + '</span>';
+    if (t.zeroAvailRows) f += '<span class="badge zero">无可用 ' + t.zeroAvailRows + ' 个' + unit + '</span>';
+    if (t.lockedRows) f += '<span class="badge lock">有锁定 ' + t.lockedRows + ' 个' + unit + '</span>';
+    return f ? '<div class="flags">' + f + '</div>' : '';
+  }
+  function kpi(label, val, cls) {
+    return '<div class="kpi' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><b>' + fmt(val) + '</b></div>';
+  }
+
+  function locCard(r) {
+    return '<article class="lc ' + stateClass(r) + '">' +
+      '<div class="lc-top"><button type="button" class="lc-loc link" data-jump="loc" data-val="' + esc(r.location) + '">' + esc(r.location) + '</button>' +
+      '<div class="lc-qty"><b>' + fmt(r.avail) + '</b><span>可用</span></div></div>' +
+      '<div class="lc-sub"><span>总库存 <b>' + fmt(r.total) + '</b></span><span>锁定 <b>' + fmt(r.locked) + '</b></span><span>' + esc(r.area) + '</span></div>' +
+      '<div class="lc-sub"><span>' + esc(r.prop) + '</span><span>' + esc(r.customer) + '</span></div>' +
+      (rowBadges(r) ? '<div class="flags">' + rowBadges(r) + '</div>' : '') +
+    '</article>';
+  }
+
+  function skuGroup(g, rows) {
+    var t = g.totals;
+    return '<div class="grp" data-group="sku">' +
+      '<div class="sku-head">' +
+        '<div class="sku-code"><button type="button" class="link" data-jump="sku" data-val="' + esc(g.sku) + '">' + esc(g.sku) + '</button></div>' +
+        (g.barcodes.length ? '<div class="sku-bar">条码 ' + esc(g.barcodes.join(' / ')) + '</div>' : '') +
+        '<div class="sku-name">' + esc(g.names.join(' / ')) + '</div>' +
+        '<div class="kpis">' +
+          kpi('可用总库存', t.avail, 'main') + kpi('库位数', g.locCount) + kpi('总库存', t.total) +
+          kpi('锁定', t.locked, t.locked ? 'warn' : '') +
+        '</div>' +
+        groupFlags(t, '库位') +
+        '<div class="meta-line">客户：' + esc(g.customers.join('、')) + '</div>' +
+      '</div>' +
+      '<div class="cards">' + rows.map(locCard).join('') + '</div>' +
+    '</div>';
+  }
+
+  function skuItem(r) {
+    return '<div class="si ' + stateClass(r) + '">' +
+      '<button type="button" class="si-sku link" data-jump="sku" data-val="' + esc(r.sku) + '">' + esc(r.sku) + '</button>' +
+      '<div class="si-qty"><b>' + fmt(r.avail) + '</b><span>可用</span><small>总 ' + fmt(r.total) + ' · 锁 ' + fmt(r.locked) + '</small></div>' +
+      '<div class="si-name">' + esc(r.name) + '</div>' +
+      '<div class="si-meta">' + (r.prop === '次品' ? '' : '<span class="badge ok">' + esc(r.prop) + '</span>') + rowBadges(r) +
+        '<span>客户 ' + esc(r.customer) + '</span>' +
+        (r.barcode !== r.sku ? '<span class="mono">条码 ' + esc(r.barcode) + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  function locGroup(g, rows) {
+    var t = g.totals;
+    return '<div class="grp" data-group="loc">' +
+      '<div class="loc-head">' +
+        '<div class="adv-label">库位</div>' +
+        '<div class="loc-code"><button type="button" class="link" data-jump="loc" data-val="' + esc(g.location) + '">' + esc(g.location) + '</button></div>' +
+        '<div class="meta-line">库区：' + esc(g.areas.join('、')) + '</div>' +
+        '<div class="kpis">' +
+          kpi('可用合计', t.avail, 'main') + kpi('SKU 数', g.skuCount) + kpi('总库存', t.total) +
+          kpi('锁定', t.locked, t.locked ? 'warn' : '') +
+        '</div>' +
+        groupFlags(t, 'SKU') +
+      '</div>' +
+      '<div class="skulist">' + rows.map(skuItem).join('') + '</div>' +
+    '</div>';
+  }
+
+  function sorter(view, current) {
+    var opts = VM.SORTS[view];
+    return '<div class="sorter"><span>排序</span>' + opts.map(function (o) {
+      return '<button type="button" data-sort-view="' + view + '" data-sort-key="' + o.key + '" aria-pressed="' + (o.key === current ? 'true' : 'false') + '">' +
+        o.label + (o.key === 'avail' || o.key === 'total' ? ' ↓' : '') + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function section(sec, ctx, showHead) {
+    var html = '';
+    if (showHead) {
+      html += '<div class="sec-h"><b>' + esc(sec.label) + '</b> ' + fmt(sec.rows.length) + ' 条记录 · ' + fmt(sec.groups.length) + ' 个' + (sec.view === 'loc' ? '库位' : 'SKU') + '</div>';
+    }
+    var multiRow = sec.groups.some(function (g) { return g.rows.length > 1; });
+    if (multiRow) html += sorter(sec.view, ctx.sortKeys[sec.view]);
+    var left = MAX_ROWS, shownGroups = 0;
+    for (var i = 0; i < sec.groups.length && left > 0; i++) {
+      var g = sec.groups[i];
+      var rows = g.rows.slice(0, left);
+      left -= rows.length;
+      shownGroups++;
+      html += sec.view === 'loc' ? locGroup(g, rows) : skuGroup(g, rows);
+    }
+    if (sec.rows.length > MAX_ROWS) {
+      html += '<div class="more">仅显示前 ' + MAX_ROWS + ' 条（' + shownGroups + ' 组），共 ' + fmt(sec.rows.length) + ' 条。请输入更完整的编号。</div>';
+    }
+    return html;
+  }
+
+  /** 结果主体：各结果区 */
+  function body(view, ctx) {
+    if (!view.sections.length) return '';
+    var showHead = view.sections.length > 1 || view.status === 'partial';
+    return view.sections.map(function (s) { return section(s, ctx, showHead); }).join('');
+  }
+
+  /** 状态条：精确匹配 / 部分匹配 / 无匹配 / 数据不可用 */
+  function outcome(kind, query, view, parts, ctx) {
+    var q = '<span class="oc-q">' + esc(query) + '</span>';
+    if (kind === 'nodata') {
+      return '<div class="outcome nodata" data-outcome="nodata"><span class="oc-k">✕ 数据不可用</span>' + q +
+        '<span class="oc-sub">库存数据未加载成功，无法查询。请检查网络后点「重新加载」。</span>' +
+        '<button type="button" class="btn-s" data-act="retryLoad">重新加载</button></div>';
+    }
+    var snap = ctx.snapLabel ? ' · 快照 ' + esc(ctx.snapLabel) : '';
+    if (kind === 'exact') {
+      return '<div class="outcome exact" data-outcome="exact"><span class="oc-k">✔ 精确匹配 · ' + esc(TYPE_LABEL[parts.resolvedMode] || '') + '</span>' + q +
+        '<span class="oc-sub">' + esc(VM.outcomeSummary(parts, ctx.allowPartial)) + snap + '</span></div>';
+    }
+    if (kind === 'partial') {
+      return '<div class="outcome partial" data-outcome="partial"><span class="oc-k">≈ 无精确匹配，显示部分匹配</span>' + q +
+        '<span class="oc-sub">' + esc(VM.outcomeSummary(parts, true)) + snap + '</span></div>';
+    }
+    var hint = view && view.hintCount ? window.LookupCore.noExactHint(view.hintCount) : '';
+    return '<div class="outcome none" data-outcome="none"><span class="oc-k">✕ 无精确匹配</span>' + q +
+      '<span class="oc-sub">' + (hint ? esc(hint) : '没有找到这个 SKU、条码或库位。请核对编码' + (ctx.allowPartial ? '。' : '，或在高级设置勾选「部分匹配」。')) + '</span>' +
+      (hint ? '<button type="button" class="btn-s" data-act="enablePartial">显示相近结果</button>' : '') + '</div>';
+  }
+
+  function emptyHome(batch) {
+    if (batch) return '<div class="empty">已打开「批量查询」。每次扫码或回车会把结果追加在下面，按扫描顺序排列；重复扫到同一个码会定位到已有结果。</div>';
+    return '<div class="empty">点「扫码查询」用相机扫，或在输入框输入 / 用扫码枪扫 SKU、条码、库位。默认只显示精确匹配。</div>';
+  }
+
+  /** 批量块 */
+  function block(entry, idx, ctx, collapsed, flash) {
+    var parts = entry.parts;
+    var kind = entry.outcome;
+    var view = VM.buildView(parts, ctx.allowPartial, ctx.sortKeys);
+    var tot = window.LookupCore.resultTotals(parts, ctx.allowPartial);
+    var k = kind === 'exact' ? (TYPE_LABEL[parts.resolvedMode] || '') : kind === 'partial' ? '部分匹配' : kind === 'nodata' ? '数据不可用' : '无精确匹配';
+    return '<section class="acc-block oc-' + kind + (collapsed ? ' collapsed' : '') + (flash ? ' flash' : '') + '" data-key="' + esc(entry.key) + '" data-index="' + idx + '">' +
+      '<button type="button" class="acc-head" data-toggle="' + esc(entry.key) + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '">' +
+        '<span class="acc-n">#' + (idx + 1) + '</span>' +
+        '<span class="acc-main"><span class="acc-k">' + esc(k) + '</span><br><span class="acc-code">' + esc(entry.query) + '</span>' +
+          '<br><span class="acc-sum">' + esc(VM.outcomeSummary(parts, ctx.allowPartial) || (view.hintCount ? window.LookupCore.noExactHint(view.hintCount) : '没有找到')) + '</span></span>' +
+        (tot.n ? '<span class="acc-qty"><b>' + fmt(tot.avail) + '</b><span>可用</span></span>' : '') +
+        '<span class="acc-tw" aria-hidden="true">' + (collapsed ? '▸' : '▾') + '</span>' +
+      '</button>' +
+      '<div class="acc-body">' + (kind === 'exact' || kind === 'partial' ? body(view, ctx) : outcome(kind, entry.query, view, parts, ctx)) + '</div>' +
+    '</section>';
+  }
+
+  /** 扫码层底部的紧凑结果 + 最近扫码 */
+  function scanPanel(kind, parts, ctx, history, showHistory) {
+    var q = parts ? parts.query : '';
+    var html = '';
+    if (kind === 'nodata') html += '<div class="sp-title sp-none">✕ 数据不可用 <b>' + esc(q) + '</b></div><div class="sp-sum">库存数据未加载成功</div>';
+    else if (kind === 'none') {
+      var n = window.LookupCore.partialHitCount(parts);
+      html += '<div class="sp-title sp-none">✕ 无精确匹配 <b>' + esc(q) + '</b></div>' +
+        (n && !ctx.allowPartial ? '<div class="sp-more">' + esc(window.LookupCore.noExactHint(n)) + '</div>' : '');
+    } else {
+      var rows = window.LookupCore.displayRows(parts, ctx.allowPartial);
+      var view = parts.resolvedMode === 'loc' ? 'loc' : 'sku';
+      rows = VM.sortRows(rows, view, ctx.sortKeys[view]);
+      html += '<div class="sp-title ' + (kind === 'exact' ? 'sp-exact' : '') + '">' + (kind === 'exact' ? '✔ ' : '≈ 部分匹配 ') + esc(TYPE_LABEL[parts.resolvedMode] || '') + ' ' + esc(q) + '</div>' +
+        '<div class="sp-sum">' + esc(VM.outcomeSummary(parts, ctx.allowPartial)) + '</div>' +
+        rows.slice(0, 6).map(function (r) {
+          var left = view === 'loc' ? r.sku : r.location;
+          return '<div class="sp-row"><span class="sp-key">' + esc(left) + '</span><span class="sp-name">' + esc(r.prop === '次品' ? '【次品】' + r.name : r.name) + '</span><span class="sp-qty">' + fmt(r.avail) + '</span></div>';
+        }).join('') +
+        (rows.length > 6 ? '<div class="sp-more">还有 ' + (rows.length - 6) + ' 条，关闭扫码后查看全部</div>' : '');
+    }
+    if (ctx.freshWarn) html += '<div class="sp-warn">⚠ ' + esc(ctx.freshWarn) + '</div>';
+    if (showHistory && history.length > 1) {
+      html += '<div class="sp-hist">' + history.slice(1, 6).map(function (h) {
+        return '<div class="sp-hrow"><span class="sp-dot oc-' + esc(h.outcome) + '"></span><span class="mono">' + esc(h.query) + '</span><span class="hs">' + esc(h.summary || '') + '</span></div>';
+      }).join('') + '</div>';
+    }
+    return html;
+  }
+
+  function historyList(list) {
+    return list.map(function (h) {
+      return '<li><button type="button" class="hq" data-hist="' + esc(h.query) + '"><span class="dot oc-' + esc(h.outcome) + '"></span>' +
+        '<span class="mono">' + esc(h.query) + '</span><span class="hs">' + esc(h.summary || OUTCOME_TEXT[h.outcome] || '') + '</span>' +
+        '<time>' + esc(h.time || '') + '</time></button></li>';
+    }).join('');
+  }
+  var OUTCOME_TEXT = { exact: '精确匹配', partial: '部分匹配', none: '无匹配', nodata: '数据不可用' };
+
+  KW.render = {
+    MAX_ROWS: MAX_ROWS,
+    OUTCOME_TEXT: OUTCOME_TEXT,
+    body: body,
+    outcome: outcome,
+    emptyHome: emptyHome,
+    block: block,
+    scanPanel: scanPanel,
+    historyList: historyList
+  };
+})();
+</script>
+<script>
+/* ==== src/app/main.js ==== */
+/* FEST7 库位查询 V2：页面主逻辑（状态、数据加载、查询、批量、扫码、焦点） */
+(function () {
+  'use strict';
+  var KW = window.KW, Core = window.LookupCore, DS = window.DataState, VM = window.ViewModel;
+  var $ = KW.$, esc = KW.esc, fmt = KW.fmt, store = KW.store, R = KW.render;
 
   var ZXING_BASES = [
     'https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.6/',
     'https://unpkg.com/zxing-wasm@3.1.6/'
   ];
-
   var SCAN_L = {
     sw_title: '扫码 - 库位查询',
     sw_opening: '正在打开摄像头…',
@@ -1012,754 +1984,566 @@ function scannerMain() {
     sw_focus: '对焦'
   };
 
+  // 本地设置键（V1 的键名保持不变，升级后用户设置不丢）
   var MULTI_KEY = 'kuwei_multi_sku';
   var PARTIAL_KEY = 'kuwei_partial_match';
+  var CONT_KEY = 'kuwei_continuous';
+  var MODE_KEY = 'kuwei_mode';
+  var SORT_KEY = 'kuwei_sort_';
+  var HIST_KEY = 'kuwei_history';
+  var CACHE_KEY = 'kuwei_v2_last_good';
   var SYNC_INTERVAL_MS = 10 * 60 * 1000;
+  var FETCH_TIMEOUT_MS = KW.CFG.fetchTimeoutMs || 15000;
+  var REPEAT_MS = 1500;
 
-  var DATA = null;
-  var records = [];
-  var mode = 'auto';
-  var lastSearch = null;
-  var session = 0;
-  var blocks = [];
-  var flashIndex = -1;
-  var syncTimer = null;
-  var syncing = false;
-
-  var qEl = document.getElementById('q');
-  var clearBtn = document.getElementById('clear');
-  var resultEl = document.getElementById('result');
-  var summaryEl = document.getElementById('summary');
-  var overlay = document.getElementById('scanOverlay');
-  var scanPanel = document.getElementById('scanResult');
-  var continuousMain = document.getElementById('continuous');
-  var continuousScan = document.getElementById('bCont');
-  var scanBtn = document.getElementById('scanBtn');
-  var httpsWarn = document.getElementById('httpsWarn');
-  var dataTimeEl = document.getElementById('dataTime');
-  var dataMetaEl = document.getElementById('dataMeta');
-  var syncBtn = document.getElementById('syncBtn');
-  var syncStatus = document.getElementById('syncStatus');
-  var multiEl = document.getElementById('multiSku');
-  var partialEl = document.getElementById('partialMatch');
-  var multiBar = document.getElementById('multiBar');
-  var multiCount = document.getElementById('multiCount');
-  var multiClear = document.getElementById('multiClear');
-  var modeBtns = {
-    auto: document.getElementById('mode-auto'),
-    sku: document.getElementById('mode-sku'),
-    loc: document.getElementById('mode-loc')
+  var S = {
+    data: null, records: [], source: '', // 'network' | 'cache'
+    loadState: 'loading', loadError: '',
+    lastOkAt: 0, lastErr: null,           // 最近一次成功检查服务器 / 最近一次失败
+    mode: 'auto', allowPartial: false, batch: false,
+    sortKeys: { sku: 'avail', loc: 'avail' },
+    current: null,                        // 单条模式当前结果 { key, query, parts, outcome }
+    blocks: [], collapsed: {},
+    lastCommit: null, history: [], wedge: null,
+    syncing: false, scanOpen: false, session: 0
   };
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function fmt(n) { return Number(n).toLocaleString('zh-CN'); }
+  var qEl = $('q'), clearBtn = $('clear'), resultEl = $('result'), summaryEl = $('summary');
+  var overlay = $('scanOverlay'), scanPanel = $('scanResult');
+  var multiEl = $('multiSku'), partialEl = $('partialMatch'), contMain = $('continuous'), contScan = $('bCont');
+  var modeBtns = { auto: $('mode-auto'), sku: $('mode-sku'), loc: $('mode-loc') };
 
   function placeholderFor(m) {
-    if (m === 'sku') return '输入或扫描 SKU / 条码';
-    if (m === 'loc') return '输入或扫描库位编号';
+    if (m === 'sku') return '扫描或输入 SKU / 条码';
+    if (m === 'loc') return '扫描或输入库位编号';
     return '扫描或输入 SKU、条码或库位';
   }
+  function nowMs() { return KW.CFG.now ? KW.CFG.now() : Date.now(); }
+  function snapMs() { return S.data ? Core.snapshotMs(S.data.meta) : 0; }
+  function snapLabel() { return S.data ? Core.formatSnapshot(S.data.meta.snapshotAt, S.data.meta.timeZone || 'Europe/Rome') : ''; }
+  function fresh() { return DS.freshness(snapMs(), nowMs()); }
 
-  function isMulti() {
-    return !!(multiEl && multiEl.checked);
-  }
-
-  function isPartial() {
-    return !!(partialEl && partialEl.checked);
-  }
-
-  function readMultiPref() {
-    try { return localStorage.getItem(MULTI_KEY) === '1'; } catch (e) { return false; }
-  }
-  function writeMultiPref(on) {
-    try { localStorage.setItem(MULTI_KEY, on ? '1' : '0'); } catch (e) {}
-  }
-  function readPartialPref() {
-    try { return localStorage.getItem(PARTIAL_KEY) === '1'; } catch (e) { return false; }
-  }
-  function writePartialPref(on) {
-    try { localStorage.setItem(PARTIAL_KEY, on ? '1' : '0'); } catch (e) {}
+  /* ---------------- 焦点 ---------------- */
+  function focusQuery() {
+    if (KW.isCoarse() || S.scanOpen) return; // 手机上不主动弹键盘
+    try { qEl.focus({ preventScroll: true }); } catch (e) { try { qEl.focus(); } catch (e2) {} }
   }
 
-  function scrollResultsIntoView(target) {
-    var el = target;
-    if (!el) {
-      if (isMulti()) el = resultEl && resultEl.querySelector('.acc-block:last-child');
-      else el = (summaryEl && summaryEl.firstChild) ? summaryEl : resultEl;
-    }
-    if (!el || !el.scrollIntoView) return;
-    function go() {
-      try { el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
-      catch (e) { try { el.scrollIntoView(); } catch (e2) {} }
-    }
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(function () { requestAnimationFrame(go); });
-    else setTimeout(go, 0);
+  /* ---------------- 滚动：只在新结果时滚动，且目标已在视野内时不动 ---------------- */
+  function scrollResultsIntoView(el) {
+    if (!el || !el.getBoundingClientRect) return;
+    var go = function () {
+      var r = el.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      if (r.top >= 0 && r.top <= vh * 0.55) return;
+      try { el.scrollIntoView({ block: 'start', behavior: 'auto' }); } catch (e) { el.scrollIntoView(); }
+    };
+    if (window.requestAnimationFrame) requestAnimationFrame(go); else setTimeout(go, 0);
   }
 
-  function setMode(next, rerender) {
-    mode = next;
-    Object.keys(modeBtns).forEach(function (k) {
-      modeBtns[k].setAttribute('aria-pressed', k === mode ? 'true' : 'false');
-    });
-    qEl.placeholder = placeholderFor(mode);
-    if (rerender !== false) {
-      if (isMulti()) {
-        blocks = LookupCore.refreshBlocks(blocks, records, mode);
-        renderAccumulate();
-      } else {
-        render();
-      }
-      focusQuery(false);
-    }
+  /* ---------------- 渲染 ---------------- */
+  function ctx() {
+    var fr = fresh();
+    var warn = '';
+    if (S.data && fr.level !== 'fresh') warn = DS.freshnessText(fr, snapLabel()).short + '：快照 ' + snapLabel();
+    if (S.source === 'cache') warn = '服务器连不上，正在用本机缓存：快照 ' + snapLabel();
+    return { allowPartial: S.allowPartial, sortKeys: S.sortKeys, snapLabel: snapLabel(), freshWarn: warn };
   }
 
-  function focusQuery(selectAll) {
-    try {
-      qEl.focus();
-      if (selectAll && qEl.value) qEl.select();
-    } catch (e) {}
-  }
-
-  function isSecure() {
-    try { return !!window.isSecureContext; } catch (e) { return location.protocol === 'https:'; }
-  }
-
-  function updateHttpsWarn() {
-    if (!httpsWarn) return;
-    if (isSecure()) {
-      httpsWarn.hidden = true;
+  function renderSingle() {
+    var c = S.current;
+    if (!c) {
+      summaryEl.innerHTML = '';
+      resultEl.innerHTML = S.loadState === 'error' && !S.data ? loadErrorHtml() : (S.loadState === 'loading' ? '<div class="empty">正在加载库存数据…</div>' : R.emptyHome(false));
       return;
     }
-    httpsWarn.hidden = false;
-    httpsWarn.textContent = '扫码需要在 https 下打开（file:// 或未加密的网页无法调用摄像头）。请把这个站点放到 https 后再用手机扫码。';
+    var view = c.parts ? VM.buildView(c.parts, S.allowPartial, S.sortKeys) : null;
+    var cx = ctx();
+    summaryEl.innerHTML = R.outcome(c.outcome, c.query, view, c.parts, cx);
+    resultEl.innerHTML = view ? R.body(view, cx) : '';
   }
 
-  function sums(list) {
-    return {
-      n: list.length,
-      sku: unique(list, 'sku'),
-      loc: unique(list, 'location'),
-      t: list.reduce(function (a, r) { return a + r.total; }, 0),
-      a: list.reduce(function (a, r) { return a + r.avail; }, 0),
-      l: list.reduce(function (a, r) { return a + r.locked; }, 0)
-    };
-  }
-  function unique(list, key) {
-    var s = {};
-    for (var i = 0; i < list.length; i++) s[list[i][key]] = 1;
-    return Object.keys(s).length;
-  }
-
-  function chips(s, label) {
-    return '<div class="sum-row">' +
-      (label ? '<div class="chip">' + label + '</div>' : '') +
-      '<div class="chip">匹配记录 <b>' + fmt(s.n) + '</b></div>' +
-      '<div class="chip">涉及 SKU <b>' + fmt(s.sku) + '</b></div>' +
-      '<div class="chip">涉及库位 <b>' + fmt(s.loc) + '</b></div>' +
-      '<div class="chip">总库存合计 <b>' + fmt(s.t) + '</b></div>' +
-      '<div class="chip">可用合计 <b>' + fmt(s.a) + '</b></div>' +
-      '<div class="chip">锁定合计 <b>' + fmt(s.l) + '</b></div>' +
-    '</div>';
-  }
-
-  function skuBtn(s) {
-    return '<button type="button" class="linkish sku" data-jump="sku" data-val="' + esc(s) + '">' + esc(s) + '</button>';
-  }
-  function locBtn(s) {
-    return '<button type="button" class="linkish loc" data-jump="loc" data-val="' + esc(s) + '">' + esc(s) + '</button>';
-  }
-  function propBadge(prop) {
-    return prop === '次品' ? '<span class="badge def">次品</span>' : '<span class="badge ok">正品</span>';
-  }
-  function barCell(r) {
-    return r.barcode !== r.sku ? '<span class="bar">' + esc(r.barcode) + '</span>' : '<span class="sub">' + esc(r.barcode) + '</span>';
-  }
-
-  var MAX = 400;
-
-  function card(r, view) {
-    var main, sub;
-    if (view === 'loc') {
-      main = locBtn(r.location);
-      sub = skuBtn(r.sku);
-    } else {
-      main = skuBtn(r.sku);
-      sub = locBtn(r.location);
+  function renderBatch(flashKey) {
+    updateMultiBar();
+    summaryEl.innerHTML = '';
+    if (!S.blocks.length) {
+      resultEl.innerHTML = S.loadState === 'error' && !S.data ? loadErrorHtml() : R.emptyHome(true);
+      return;
     }
-    return '<article class="card">' +
-      '<div class="card-top"><div class="card-main">' + main + '</div><div class="card-qty"><b>' + fmt(r.avail) + '</b><span>可用</span></div></div>' +
-      '<div class="card-sub">' + sub + (r.barcode !== r.sku ? ' · 条码 ' + esc(r.barcode) : '') + '</div>' +
-      '<div class="card-name">' + esc(r.name) + '</div>' +
-      '<div class="card-meta">' + esc(r.area) + ' · ' + esc(r.customer) + ' · ' + propBadge(r.prop) + '</div>' +
-      '<div class="card-nums"><span>总库存 <b>' + fmt(r.total) + '</b></span><span>锁定 <b>' + fmt(r.locked) + '</b></span></div>' +
-    '</article>';
+    var cx = ctx(), html = '';
+    for (var i = 0; i < S.blocks.length; i++) {
+      var b = S.blocks[i];
+      html += R.block(b, i, cx, !!S.collapsed[b.key], flashKey === b.key);
+    }
+    resultEl.innerHTML = html;
   }
 
-  function renderList(list, view) {
-    if (!list.length) return '';
-    var shown = list.slice(0, MAX);
-    var more = list.length > MAX ? '<p class="hint">仅显示前 ' + MAX + ' 条，请缩小关键词或使用更完整的编号。</p>' : '';
-    var cards = '<div class="cards">' + shown.map(function (r) { return card(r, view); }).join('') + '</div>';
-    var cols, rowHtml;
-    if (view === 'loc') {
-      cols = ['库位', '库区', 'SKU', '条码', '品名', '客户', '库存属性', '总库存', '可用', '锁定'];
-      rowHtml = function (r) {
-        return '<tr><td>' + locBtn(r.location) + '</td><td>' + esc(r.area) + '</td><td>' + skuBtn(r.sku) + '</td><td>' + barCell(r) + '</td><td>' + esc(r.name) + '</td><td class="col-hide">' + esc(r.customer) + '</td><td>' + propBadge(r.prop) + '</td><td class="num">' + fmt(r.total) + '</td><td class="num">' + fmt(r.avail) + '</td><td class="num">' + fmt(r.locked) + '</td></tr>';
-      };
-    } else {
-      cols = ['SKU', '条码', '品名', '库位', '库区', '客户', '库存属性', '总库存', '可用', '锁定'];
-      rowHtml = function (r) {
-        return '<tr><td>' + skuBtn(r.sku) + '</td><td>' + barCell(r) + '</td><td>' + esc(r.name) + '</td><td>' + locBtn(r.location) + '</td><td>' + esc(r.area) + '</td><td class="col-hide">' + esc(r.customer) + '</td><td>' + propBadge(r.prop) + '</td><td class="num">' + fmt(r.total) + '</td><td class="num">' + fmt(r.avail) + '</td><td class="num">' + fmt(r.locked) + '</td></tr>';
-      };
-    }
-    var table = '<div class="table-wrap"><table><thead><tr>' + cols.map(function (c) {
-      var cls = c === '客户' ? ' class="col-hide"' : (['总库存', '可用', '锁定'].indexOf(c) >= 0 ? ' class="num"' : '');
-      return '<th' + cls + '>' + c + '</th>';
-    }).join('') + '</tr></thead><tbody>' + shown.map(rowHtml).join('') + '</tbody></table></div>';
-    return more + cards + table;
-  }
-
-  function perSkuTable(list) {
-    var map = {};
-    for (var i = 0; i < list.length; i++) {
-      var r = list[i];
-      var cur = map[r.sku] || { name: r.name, t: 0, a: 0, l: 0, n: 0 };
-      cur.t += r.total; cur.a += r.avail; cur.l += r.locked; cur.n += 1;
-      map[r.sku] = cur;
-    }
-    var keys = Object.keys(map);
-    if (keys.length <= 1) return '';
-    keys.sort(function (x, y) { return map[y].t - map[x].t; });
-    var show = keys.slice(0, 30);
-    return '<p class="hint">按 SKU 汇总数量' + (keys.length > 30 ? '（前 30 个，共 ' + keys.length + ' 个 SKU）' : '（共 ' + keys.length + ' 个 SKU）') + '</p>' +
-      '<div class="table-wrap"><table><thead><tr><th>SKU</th><th>品名</th><th class="num">库位数</th><th class="num">总库存</th><th class="num">可用</th><th class="num">锁定</th></tr></thead><tbody>' +
-      show.map(function (s) {
-        var v = map[s];
-        return '<tr><td>' + skuBtn(s) + '</td><td>' + esc(v.name) + '</td><td class="num">' + fmt(v.n) + '</td><td class="num">' + fmt(v.t) + '</td><td class="num">' + fmt(v.a) + '</td><td class="num">' + fmt(v.l) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
-  }
-
-  function emptyHtml() {
-    if (isMulti()) {
-      return '<div class="empty">已打开「多SKU连续查询」。每次扫码或回车会在下方追加一条结果，不会覆盖上一条。再扫下一个 SKU，它的库位会显示在上一条下面。</div>';
-    }
-    return '<div class="empty">扫描或输入关键词开始查询。默认只显示精确匹配的 SKU 或库位；勾选「部分匹配」后才会显示包含关键词的相近结果。默认「自动识别」：完整库位号会只显示该库位上的 SKU（例如 BB-1-4-2 不会和 BBB-1-4-2 混在一起）；完整 SKU 或条码会只显示该 SKU 的库位。也可以手动选择「搜 SKU」或「搜库位」。扫码枪扫完回车即查，结果会自动全选方便再扫。</div>';
-  }
-
-  function noExactBody(parts) {
-    var n = LookupCore.partialHitCount(parts);
-    var hint = n ? '<p class="hint">' + esc(LookupCore.noExactHint(n)) + '</p>' : '';
-    return {
-      head: '',
-      body: '<div class="empty">无精确匹配<span class="query-echo">' + esc(parts.query) + '</span></div>' + hint
-    };
-  }
-
-  function renderResultBody(parts) {
-    var allowPartial = isPartial();
-    if (!allowPartial && !(parts.exact && parts.exact.length)) {
-      return noExactBody(parts);
-    }
-    if (parts.resolvedMode !== 'both') {
-      var exact = parts.exact || [];
-      var partial = allowPartial ? (parts.partial || []) : [];
-      if (!exact.length && !partial.length) {
-        return {
-          head: '',
-          body: '<div class="empty">没有找到匹配的记录。<span class="query-echo">' + esc(parts.query) + '</span></div>'
-        };
-      }
-      var view = parts.resolvedMode;
-      var head = '';
-      if (exact.length && partial.length) {
-        head = chips(sums(exact), '精确匹配') + chips(sums(partial), '其他部分匹配') +
-          (view === 'sku' ? perSkuTable(exact) : '');
-      } else {
-        var label = exact.length ? '精确匹配' : '部分匹配';
-        var list = exact.length ? exact : partial;
-        head = chips(sums(list), label) + (view === 'sku' ? perSkuTable(list) : '');
-      }
-      if (mode === 'auto') {
-        head = '<div class="resolved">' + (view === 'loc' ? '已按<strong>库位</strong>精确匹配' : '已按<strong>SKU / 条码</strong>精确匹配') +
-          ' · ' + esc(parts.query) + '</div>' + head;
-      }
-      var body = '';
-      if (exact.length) body += '<h2>精确匹配（' + fmt(exact.length) + '）</h2>' + renderList(exact, view);
-      if (partial.length) body += '<h2>部分匹配（' + fmt(partial.length) + '）</h2>' + renderList(partial, view);
-      return { head: head, body: body };
-    }
-
-    var locN = parts.partialLoc.length, skuN = parts.partialSku.length;
-    if (!locN && !skuN) {
-      return {
-        head: '',
-        body: '<div class="empty">没有找到匹配的记录。<span class="query-echo">' + esc(parts.query) + '</span></div>'
-      };
-    }
-    return {
-      head: '<div class="resolved">未精确命中，已同时搜索库位和 SKU / 条码 · ' + esc(parts.query) + '</div>' +
-        (locN ? chips(sums(parts.partialLoc), '库位部分匹配') : '') +
-        (skuN ? chips(sums(parts.partialSku), 'SKU / 条码部分匹配') + perSkuTable(parts.partialSku) : ''),
-      body: (locN ? '<h2>库位部分匹配（' + fmt(locN) + '）</h2>' + renderList(parts.partialLoc, 'loc') : '') +
-        (skuN ? '<h2>SKU / 条码部分匹配（' + fmt(skuN) + '）</h2>' + renderList(parts.partialSku, 'sku') : '')
-    };
-  }
-
-  function renderFrom(parts, query) {
-    lastSearch = parts;
-    clearBtn.hidden = !query;
-    if (!String(query || '').trim()) {
-      summaryEl.innerHTML = '';
-      resultEl.innerHTML = emptyHtml();
-      return parts;
-    }
-    var rendered = renderResultBody(parts);
-    summaryEl.innerHTML = rendered.head;
-    resultEl.innerHTML = rendered.body;
-    return parts;
-  }
-
-  function render() {
-    var query = qEl.value;
-    var parts = LookupCore.search(records, mode, query);
-    return renderFrom(parts, query);
+  function render(flashKey) {
+    if (S.batch) renderBatch(flashKey); else { updateMultiBar(); renderSingle(); }
+    clearBtn.hidden = !qEl.value;
   }
 
   function updateMultiBar() {
-    if (!multiBar) return;
-    var on = isMulti();
-    multiBar.hidden = !on;
-    if (multiCount) multiCount.textContent = '已查询 ' + fmt(blocks.length) + ' 个';
-    if (multiClear) multiClear.disabled = !blocks.length;
+    var bar = $('multiBar');
+    bar.hidden = !S.batch;
+    $('multiCount').textContent = '批量 ' + fmt(S.blocks.length) + ' 条';
+    $('multiClear').disabled = !S.blocks.length;
+    $('expandAll').disabled = !S.blocks.length;
+    $('collapseAll').disabled = !S.blocks.length;
   }
 
-  function blockHeader(entry) {
-    var totals = LookupCore.resultTotals(entry.parts, isPartial());
-    var viewHint = '';
-    if (entry.parts.resolvedMode === 'loc') viewHint = '库位';
-    else if (entry.parts.resolvedMode === 'sku') viewHint = 'SKU / 条码';
-    return '<div class="acc-head">' +
-      '<h2><span class="acc-k">' + (viewHint ? esc(viewHint) + ' ' : '') + '</span><span class="acc-code">' + esc(entry.query) + '</span></h2>' +
-      '<div class="acc-qty">总库存 <b>' + fmt(totals.total) + '</b><span> · 可用 ' + fmt(totals.avail) + '</span></div>' +
-    '</div>';
+  function loadErrorHtml() {
+    return '<div class="outcome nodata" data-outcome="nodata"><span class="oc-k">✕ 无法加载库存数据</span>' +
+      '<span class="oc-sub">' + esc(S.loadError || '') + '。请检查网络（需要 https），然后点「重新加载」。</span>' +
+      '<button type="button" class="btn-s" data-act="retryLoad" id="retryLoad">重新加载</button></div>';
   }
 
-  function renderAccumulate(actionInfo) {
-    updateMultiBar();
-    clearBtn.hidden = !String(qEl.value || '').trim() && !blocks.length;
-    if (!blocks.length) {
-      summaryEl.innerHTML = '';
-      resultEl.innerHTML = emptyHtml();
-      return;
-    }
-    summaryEl.innerHTML = '';
-    var html = '';
-    for (var i = 0; i < blocks.length; i++) {
-      var entry = blocks[i];
-      var rendered = renderResultBody(entry.parts);
-      var flash = (actionInfo && actionInfo.action === 'flash' && actionInfo.index === i) || flashIndex === i;
-      html += '<section class="acc-block' + (flash ? ' flash' : '') + '" data-key="' + esc(entry.key) + '" data-index="' + i + '">' +
-        blockHeader(entry) + rendered.head + rendered.body +
-      '</section>';
-    }
-    resultEl.innerHTML = html;
-    flashIndex = -1;
-    if (actionInfo && (actionInfo.action === 'flash' || actionInfo.action === 'append') && actionInfo.index >= 0) {
-      var el = resultEl.querySelector('.acc-block[data-index="' + actionInfo.index + '"]');
-      if (el) scrollResultsIntoView(el);
-    }
+  /* ---------------- 查询 ---------------- */
+  function outcomeOf(parts) { return VM.scanOutcome(parts, S.allowPartial, !!S.data); }
+
+  function entryFor(query) {
+    var parts = S.data ? Core.search(S.records, S.mode, query) : { query: String(query).trim(), q: Core.normalize(query), resolvedMode: 'auto', exact: [], partial: [], exactLoc: [], exactSku: [], partialLoc: [], partialSku: [] };
+    return { key: Core.normalize(query), query: String(query).trim(), parts: parts, outcome: outcomeOf(parts) };
   }
 
-  function commitQuery(text, fromScan) {
-    if (text != null) qEl.value = String(text);
-    var query = qEl.value;
-    var parts = LookupCore.search(records, mode, query);
-    lastSearch = parts;
-    if (isMulti()) {
-      if (!String(query || '').trim()) {
-        renderAccumulate();
-      } else {
-        var acc = LookupCore.accumulate(blocks, parts);
-        blocks = acc.blocks;
-        renderAccumulate(acc);
+  /**
+   * source: 'type' 回车/查询按钮 | 'wedge' 扫码枪（焦点不在输入框） | 'scan' 相机 | 'jump' 点结果里的编号 | 'history' 最近查询
+   */
+  function commitQuery(text, source) {
+    var query = String(text == null ? '' : text).trim();
+    if (!query) return null;
+    var key = Core.normalize(query);
+    var t = nowMs();
+    var signal = source === 'type' || source === 'wedge' || source === 'scan';
+    if (signal && VM.isRepeat(S.lastCommit, key, t, REPEAT_MS)) {
+      // 扫码枪连按回车 / 相机重复识别：忽略，不重绘、不滚动
+      S.lastCommit.at = t;
+      qEl.value = ''; clearBtn.hidden = true;
+      KW.toast('重复扫码已忽略：' + query);
+      return null;
+    }
+    S.lastCommit = { key: key, at: t };
+    var entry = entryFor(query);
+    var flashKey = '', isNew = true;
+
+    if (S.batch) {
+      var acc = Core.accumulate(S.blocks.map(function (b) { return { key: b.key, query: b.query, parts: b.parts }; }), entry.parts);
+      if (acc.action !== 'noop') {
+        var list = acc.blocks.map(function (b, i) {
+          var old = S.blocks[i];
+          if (i !== acc.index) return old;
+          // 重复扫描：保留第一次扫描时的写法（大小写），结果用最新查询刷新
+          if (acc.action === 'flash' && old) { entry.query = old.query; }
+          return entry;
+        });
+        S.blocks = list;
+        if (acc.action === 'flash') {
+          isNew = false; flashKey = entry.key;
+          if (S.collapsed[entry.key]) S.collapsed = VM.toggleCollapsed(S.collapsed, entry.key);
+        }
       }
+      S.current = entry;
+      renderBatch(flashKey);
+      var target = resultEl.querySelector('.acc-block[data-key="' + cssEsc(entry.key) + '"]');
+      scrollResultsIntoView(target);
+      if (!isNew) KW.toast('已在第 ' + (acc.index + 1) + ' 条，未重复添加', 'exact');
     } else {
-      renderFrom(parts, query);
+      isNew = !(S.current && S.current.key === entry.key);
+      S.current = entry;
+      renderSingle();
+      if (isNew) scrollResultsIntoView($('results'));
     }
-    if (fromScan) compactPanel(parts);
-    focusQuery(true);
-    if (!isMulti() && String(query || '').trim()) {
-      scrollResultsIntoView(summaryEl && summaryEl.firstChild ? summaryEl : resultEl);
-    }
-    return parts;
+    S.history = VM.pushHistory(S.history, {
+      query: entry.query, outcome: entry.outcome, summary: entry.parts.q && S.data ? VM.outcomeSummary(entry.parts, S.allowPartial) : '',
+      time: DS.formatClock(t, 'Europe/Rome')
+    }, 20);
+    saveHistory(); renderHistory();
+    if (signal) KW.feedback.signal(entry.outcome);
+    if (S.scanOpen) updateScanPanel(entry);
+
+    qEl.value = ''; clearBtn.hidden = true;
+    if (source === 'type' && KW.isCoarse()) { try { qEl.blur(); } catch (e) {} }
+    else focusQuery();
+    KW.lastOutcome = entry.outcome;
+    return entry;
   }
 
-  function compactPanel(parts) {
-    if (!scanPanel) return;
-    var q = parts && parts.query;
-    if (!q) { scanPanel.hidden = true; scanPanel.innerHTML = ''; return; }
-    var allowPartial = isPartial();
-    var list, view, title;
-    if (parts.resolvedMode === 'loc' && parts.exact.length) {
-      list = parts.exact; view = 'loc'; title = '库位 ' + q;
-    } else if (parts.resolvedMode === 'sku' && parts.exact.length) {
-      list = parts.exact; view = 'sku'; title = 'SKU / 条码 ' + q;
-    } else if (!allowPartial) {
-      var pn = LookupCore.partialHitCount(parts);
-      var hint = pn ? LookupCore.noExactHint(pn) : '';
-      scanPanel.hidden = false;
-      scanPanel.innerHTML = '<div class="sp-miss">无精确匹配 <b>' + esc(q) + '</b></div>' +
-        (hint ? '<div class="sp-more">' + esc(hint) + '</div>' : '');
-      return;
-    } else if (parts.resolvedMode === 'both') {
-      var n = parts.partialLoc.length + parts.partialSku.length;
-      if (!n) {
-        scanPanel.hidden = false;
-        scanPanel.innerHTML = '<div class="sp-miss">未找到 <b>' + esc(q) + '</b></div>';
+  function cssEsc(s) { return window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&'); }
+
+  function rerunAll() {
+    if (S.current) S.current = entryFor(S.current.query);
+    S.blocks = S.blocks.map(function (b) { return entryFor(b.query); });
+    render();
+  }
+
+  /* ---------------- 最近查询 ---------------- */
+  function loadHistory() {
+    try { var h = JSON.parse(store.get(HIST_KEY, '[]')); S.history = Array.isArray(h) ? h.slice(0, 20) : []; } catch (e) { S.history = []; }
+  }
+  function saveHistory() { store.set(HIST_KEY, JSON.stringify(S.history)); }
+  function renderHistory() {
+    $('histCount').textContent = S.history.length;
+    $('history').innerHTML = R.historyList(S.history);
+    $('histClear').disabled = !S.history.length;
+  }
+
+  /* ---------------- 数据状态 UI ---------------- */
+  function updateStatusUI() {
+    var meta = S.data && S.data.meta;
+    var pill = $('dataPill'), banner = $('freshBanner');
+    var fr = fresh(), t = nowMs();
+    var level = !S.data ? (S.loadState === 'loading' ? 'none' : 'strong') : fr.level;
+    if (S.data && S.source === 'cache') level = 'strong';
+    pill.className = 'pill lv-' + level;
+    $('freshDot').className = 'dot lv-' + level;
+    if (!S.data) {
+      $('pillText').textContent = S.loadState === 'loading' ? '加载中…' : '数据不可用';
+      $('dataTime').textContent = '—';
+      $('dataAge').textContent = S.loadState === 'loading' ? '正在加载…' : '没有可用数据';
+      $('freshTag').className = 'tag lv-' + level;
+      $('freshTag').textContent = S.loadState === 'loading' ? '加载中' : '不可用';
+    } else {
+      var txt = DS.freshnessText(fr, snapLabel());
+      $('pillText').textContent = '快照 ' + DS.formatClock(snapMs(), 'Europe/Rome', true) + ' · 非实时';
+      $('dataTime').textContent = snapLabel();
+      $('dataAge').textContent = '意大利时间 · ' + DS.formatAge(Math.max(0, fr.ageMs)) + ' · 非实时，同步不等于实时 WMS';
+      $('freshTag').className = 'tag lv-' + fr.level;
+      $('freshTag').textContent = S.source === 'cache' ? '本机缓存' : txt.short;
+      $('stats').innerHTML = '<span>记录 <b>' + fmt(meta.rowCount) + '</b></span><span>SKU <b>' + fmt(meta.uniqueSkus) + '</b></span>' +
+        '<span>库位 <b>' + fmt(meta.uniqueLocations) + '</b></span><span>客户 <b>' + fmt(meta.uniqueCustomers) + '</b></span>' +
+        '<span>正品 <b>' + fmt(meta.genuineCount) + '</b> · 次品 <b>' + fmt(meta.defectiveCount) + '</b></span>' +
+        '<span>来源文件 <b>' + esc(meta.sourceFile || '—') + '</b></span>';
+    }
+    var ck = DS.checkState(S.lastOkAt, t);
+    $('lastCheck').textContent = S.lastOkAt ? DS.formatClock(S.lastOkAt, 'Europe/Rome') + '（' + DS.formatAge(ck.ageMs) + '）' : '—';
+
+    // 横幅：缓存数据 / 过期 / 长时间连不上服务器 —— 绝不静默使用过期数据
+    var msgs = [], cls = '';
+    if (S.data && S.source === 'cache') {
+      msgs.push('<b>正在使用本机缓存数据</b>（快照 ' + esc(snapLabel()) + '）。服务器暂时连不上：' + esc(S.lastErr ? S.lastErr.msg : '') + '。库存可能已变化，请以 WMS 为准。');
+      cls = 'strong';
+    }
+    if (S.data && fr.level !== 'fresh') {
+      msgs.push('<b>' + esc(DS.freshnessText(fr, snapLabel()).short) + '：</b>' + esc(DS.freshnessText(fr, snapLabel()).long));
+      cls = cls || fr.level;
+      if (fr.level === 'strong') cls = 'strong';
+    }
+    if (S.data && S.source !== 'cache' && S.lastOkAt && ck.stale) {
+      msgs.push('<b>已 ' + esc(DS.formatAge(ck.ageMs).replace('前', '')) + '没能连上服务器检查新数据</b>' + (S.lastErr ? '（' + esc(S.lastErr.msg) + '）' : '') + '。当前显示的仍是快照 ' + esc(snapLabel()) + '。');
+      cls = cls || 'warn';
+    }
+    if (msgs.length) {
+      banner.className = 'banner ' + cls;
+      banner.innerHTML = msgs.join('<br>') + '<div class="banner-act"><button type="button" class="btn-s" data-act="sync">一键同步</button></div>';
+      banner.hidden = false;
+    } else {
+      banner.hidden = true; banner.innerHTML = '';
+    }
+  }
+
+  function setSyncStatus(text, kind) {
+    var el = $('syncStatus');
+    el.textContent = text || '';
+    el.className = kind ? 'is-' + kind : '';
+  }
+
+  /* ---------------- 数据加载 / 同步 ---------------- */
+  function fetchData() {
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, FETCH_TIMEOUT_MS);
+    return fetch('data.json?t=' + Date.now(), { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined }).then(function (res) {
+      if (!res.ok) throw new Error('data.json 返回 HTTP ' + res.status);
+      return res.text();
+    }).then(function (txt) {
+      var data;
+      try { data = JSON.parse(txt); } catch (e) { throw new Error('data.json 不是有效的 JSON'); }
+      var v = DS.validateData(data);
+      if (!v.ok) throw new Error('data.json 校验失败：' + v.errors.slice(0, 3).join('；'));
+      return { data: data, text: txt };
+    }, function (e) {
+      if (e && e.name === 'AbortError') throw new Error('网络超时（' + Math.round(FETCH_TIMEOUT_MS / 1000) + ' 秒）');
+      if (e && /data\.json/.test(e.message || '')) throw e;
+      throw new Error('网络错误：' + ((e && e.message) || e));
+    }).then(function (r) { clearTimeout(timer); return r; }, function (e) { clearTimeout(timer); throw e; });
+  }
+
+  function saveCache(text) {
+    // 本机保存最近一次校验通过的数据，仅在服务器连不上时使用（会明显提示）
+    if (!store.set(CACHE_KEY, text)) store.del(CACHE_KEY);
+  }
+  function readCache() {
+    var txt = store.get(CACHE_KEY, '');
+    if (!txt) return null;
+    try {
+      var d = JSON.parse(txt);
+      return DS.validateData(d).ok ? d : null;
+    } catch (e) { return null; }
+  }
+
+  function applyData(data, source) {
+    S.data = data;
+    S.records = Core.buildRecords(data);
+    S.source = source;
+    S.loadState = 'ready';
+    rerunAll();
+    updateStatusUI();
+  }
+
+  function startLoad() {
+    S.loadState = 'loading';
+    updateStatusUI();
+    render();
+    return fetchData().then(function (r) {
+      S.lastOkAt = nowMs(); S.lastErr = null;
+      applyData(r.data, 'network');
+      saveCache(r.text);
+      setSyncStatus('', '');
+    }).catch(function (e) {
+      S.lastErr = { at: nowMs(), msg: e.message || String(e) };
+      var cached = readCache();
+      if (cached) {
+        applyData(cached, 'cache');
+        setSyncStatus('加载失败：' + S.lastErr.msg, 'err');
         return;
       }
-      scanPanel.hidden = false;
-      scanPanel.innerHTML = '<div class="sp-title">部分匹配 <b>' + esc(q) + '</b></div>' +
-        '<div class="sp-sum">库位 ' + fmt(parts.partialLoc.length) + ' 条 · SKU ' + fmt(parts.partialSku.length) + ' 条</div>';
-      return;
-    } else {
-      list = parts.exact.concat(parts.partial);
-      if (!list.length) {
-        scanPanel.hidden = false;
-        scanPanel.innerHTML = '<div class="sp-miss">未找到 <b>' + esc(q) + '</b></div>';
-        return;
+      S.loadState = 'error';
+      S.loadError = S.lastErr.msg;
+      render();
+      updateStatusUI();
+      setSyncStatus('加载失败：' + S.lastErr.msg, 'err');
+    });
+  }
+
+  function syncData(manual) {
+    if (S.syncing) return Promise.resolve();
+    if (!S.data) return startLoad();
+    S.syncing = true;
+    var btn = $('syncBtn');
+    btn.disabled = true; btn.textContent = '同步中…';
+    if (manual) setSyncStatus('正在检查服务器…', 'muted');
+    return fetchData().then(function (r) {
+      S.lastOkAt = nowMs(); S.lastErr = null;
+      var cmp = Core.compareSnapshots(S.data.meta, r.data.meta);
+      if (cmp === 'newer' || S.source === 'cache') {
+        if (cmp === 'older') {
+          setSyncStatus('服务器数据比本机缓存旧，已改用服务器数据（快照 ' + Core.formatSnapshot(r.data.meta.snapshotAt, 'Europe/Rome') + '）', 'muted');
+        }
+        applyData(r.data, 'network');
+        saveCache(r.text);
+        if (cmp !== 'older') setSyncStatus(Core.syncStatusText('newer', r.data.meta), 'ok');
+        if (!manual && cmp === 'newer') KW.toast('已同步新数据：快照 ' + snapLabel());
+      } else if (cmp === 'older') {
+        setSyncStatus('服务器上的数据（快照 ' + Core.formatSnapshot(r.data.meta.snapshotAt, 'Europe/Rome') + '）比当前旧，未替换', 'muted');
+      } else if (manual) {
+        setSyncStatus(Core.syncStatusText('same', S.data.meta) + '（这是最近一次整点上传，不是实时 WMS）', 'muted');
       }
-      view = parts.resolvedMode === 'loc' ? 'loc' : 'sku';
-      title = (view === 'loc' ? '库位 ' : 'SKU ') + q + '（部分匹配）';
-    }
-    var s = sums(list);
-    var rows = list.slice(0, 8).map(function (r) {
-      var left = view === 'loc' ? r.sku : r.location;
-      return '<div class="sp-row"><span class="sp-key">' + esc(left) + '</span><span class="sp-name">' + esc(r.name) + '</span><span class="sp-qty">' + fmt(r.avail) + '</span></div>';
-    }).join('');
-    var more = list.length > 8 ? '<div class="sp-more">还有 ' + (list.length - 8) + ' 条，关闭扫码后查看全部</div>' : '';
-    scanPanel.hidden = false;
-    scanPanel.innerHTML = '<div class="sp-title">' + esc(title) + '</div>' +
-      '<div class="sp-sum">记录 ' + fmt(s.n) + ' · SKU ' + fmt(s.sku) + ' · 库位 ' + fmt(s.loc) + ' · 可用合计 <b>' + fmt(s.a) + '</b></div>' +
-      rows + more;
+    }).catch(function (e) {
+      S.lastErr = { at: nowMs(), msg: e.message || String(e) };
+      setSyncStatus('同步失败：' + S.lastErr.msg + '。继续显示快照 ' + snapLabel() + ' 的数据', 'err');
+    }).then(function () {
+      S.syncing = false;
+      btn.disabled = false; btn.textContent = '一键同步';
+      updateStatusUI();
+    });
   }
 
-  function applyQuery(text, fromScan) {
-    return commitQuery(text, fromScan);
+  /* ---------------- 扫码 ---------------- */
+  function isSecure() {
+    try { return !!window.isSecureContext; } catch (e) { return location.protocol === 'https:'; }
   }
-
+  function updateHttpsWarn() {
+    var w = $('httpsWarn');
+    if (isSecure()) { w.hidden = true; return; }
+    w.hidden = false;
+    w.textContent = '扫码需要在 https 下打开（file:// 或未加密的网页无法调用摄像头）。扫码枪和手动输入不受影响。';
+  }
+  function isContinuous() { return !!(contMain.checked || contScan.checked); }
   function syncContinuous(from) {
-    var on = !!(from || continuousMain).checked;
-    if (continuousMain) continuousMain.checked = on;
-    if (continuousScan) continuousScan.checked = on;
-    var lab = document.getElementById('contLabel');
-    if (lab) lab.textContent = on ? '连续扫描：开' : '连续扫描';
+    var on = !!from.checked;
+    contMain.checked = on; contScan.checked = on;
+    store.setBool(CONT_KEY, on);
   }
-
+  function updateScanPanel(entry) {
+    var cx = ctx();
+    scanPanel.className = 'oc-' + entry.outcome;
+    scanPanel.innerHTML = R.scanPanel(entry.outcome, entry.parts, cx, S.history, isContinuous());
+    scanPanel.hidden = false;
+  }
   function closeScanner() {
-    if (window.__DD_CFG && typeof window.__DD_CFG._stop === 'function') {
-      try { window.__DD_CFG._stop(); } catch (e) {}
-    }
+    if (window.__DD_CFG && typeof window.__DD_CFG._stop === 'function') { try { window.__DD_CFG._stop(); } catch (e) {} }
     overlay.hidden = true;
+    S.scanOpen = false;
     document.body.classList.remove('scanning');
-    if (scanPanel) { scanPanel.hidden = true; }
-    focusQuery(true);
+    scanPanel.hidden = true;
+    focusQuery();
+    if (S.current) scrollResultsIntoView(S.batch ? resultEl.querySelector('.acc-block[data-key="' + cssEsc(S.current.key) + '"]') : $('results'));
   }
-
   function openScanner() {
-    if (!isSecure()) {
-      updateHttpsWarn();
-      httpsWarn.hidden = false;
-      httpsWarn.scrollIntoView({ block: 'nearest' });
-      return;
-    }
-    if (window.__DD_CFG && typeof window.__DD_CFG._stop === 'function') {
-      try { window.__DD_CFG._stop(); } catch (e) {}
-    }
-    session += 1;
-    syncContinuous(continuousMain);
-    if (scanPanel) { scanPanel.hidden = true; scanPanel.innerHTML = ''; }
+    KW.feedback.unlock();
+    if (!isSecure()) { updateHttpsWarn(); $('httpsWarn').scrollIntoView({ block: 'nearest' }); return; }
+    if (window.__DD_CFG && typeof window.__DD_CFG._stop === 'function') { try { window.__DD_CFG._stop(); } catch (e) {} }
+    S.session += 1;
+    contScan.checked = contMain.checked;
+    scanPanel.hidden = true; scanPanel.innerHTML = '';
     overlay.hidden = false;
+    S.scanOpen = true;
     document.body.classList.add('scanning');
-    var force = '';
-    try { force = localStorage.getItem('dd_scan_engine') || ''; } catch (e) {}
+    try { qEl.blur(); } catch (e) {}
+    var force = store.get('dd_scan_engine', '');
     window.__DD_CFG = {
       zx: ZXING_BASES,
       L: SCAN_L,
       force: force,
-      _session: session,
-      continuous: function () { return !!(continuousScan && continuousScan.checked) || !!(continuousMain && continuousMain.checked); },
-      onSuccess: function (text) {
-        applyQuery(text, true);
-      },
+      silent: true, // 由页面按查询结果发出提示音 / 震动
+      _session: S.session,
+      continuous: isContinuous,
+      onSuccess: function (text) { commitQuery(text, 'scan'); },
       onClose: closeScanner,
       onCancel: closeScanner
     };
     scannerMain();
   }
 
-  function displayTime(meta) {
-    if (!meta) return '';
-    return LookupCore.formatSnapshot(meta.snapshotAt || meta.exportedAt, meta.timeZone || 'Europe/Rome');
+  /* ---------------- 模式 / 设置 ---------------- */
+  function setMode(next) {
+    S.mode = next;
+    store.set(MODE_KEY, next);
+    Object.keys(modeBtns).forEach(function (k) { modeBtns[k].setAttribute('aria-pressed', k === next ? 'true' : 'false'); });
+    qEl.placeholder = placeholderFor(next);
   }
 
-  function updateMetaUI() {
-    var meta = DATA && DATA.meta;
-    if (dataTimeEl) {
-      dataTimeEl.innerHTML = meta && (meta.snapshotAt || meta.exportedAt)
-        ? '数据更新时间：<b>' + esc(displayTime(meta)) + '</b>'
-        : '数据更新时间：<b>—</b>';
-    }
-    if (dataMetaEl) {
-      var n = meta && meta.rowCount != null ? fmt(meta.rowCount) : '0';
-      var wh = (meta && (meta.warehouseLabel || meta.warehouse)) || 'fest7';
-      dataMetaEl.innerHTML = '共 <strong>' + n + '</strong> 条 · 仓库 ' + esc(wh) + ' · 来自领星 WMS「按库位查询」导出，非实时数据。含客户名称和库存，请不要公开发布。';
-    }
-    var stats = document.getElementById('stats');
-    if (stats && meta) {
-      stats.innerHTML =
-        '<span>记录 <b>' + fmt(meta.rowCount) + '</b></span>' +
-        '<span>SKU <b>' + fmt(meta.uniqueSkus) + '</b></span>' +
-        '<span>库位 <b>' + fmt(meta.uniqueLocations) + '</b></span>' +
-        '<span>客户 <b>' + fmt(meta.uniqueCustomers) + '</b></span>' +
-        '<span>库区 <b>' + fmt(meta.uniqueAreas) + '</b></span>' +
-        '<span>正品 <b>' + fmt(meta.genuineCount) + '</b> · 次品 <b>' + fmt(meta.defectiveCount) + '</b></span>';
-    }
-  }
+  /* ---------------- 事件 ---------------- */
+  $('qForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    commitQuery(qEl.value, 'type');
+  });
+  qEl.addEventListener('input', function () { clearBtn.hidden = !qEl.value; });
+  clearBtn.addEventListener('click', function () { qEl.value = ''; clearBtn.hidden = true; focusQuery(); });
+  $('scanBtn').addEventListener('click', openScanner);
+  $('syncBtn').addEventListener('click', function () { syncData(true); });
 
-  function setSyncStatus(text, kind) {
-    if (!syncStatus) return;
-    syncStatus.textContent = text || '';
-    syncStatus.className = kind ? 'is-' + kind : '';
-  }
+  Object.keys(modeBtns).forEach(function (k) {
+    modeBtns[k].addEventListener('click', function () { setMode(k); rerunAll(); focusQuery(); });
+  });
+  partialEl.addEventListener('change', function () {
+    S.allowPartial = partialEl.checked;
+    store.setBool(PARTIAL_KEY, S.allowPartial);
+    rerunAll(); focusQuery();
+  });
+  multiEl.addEventListener('change', function () {
+    S.batch = multiEl.checked;
+    store.setBool(MULTI_KEY, S.batch);
+    if (S.batch && !S.blocks.length && S.current && S.current.parts.q) S.blocks = [S.current];
+    render(); focusQuery();
+  });
+  contMain.addEventListener('change', function () { syncContinuous(contMain); });
+  contScan.addEventListener('change', function () { syncContinuous(contScan); });
+  $('optSound').addEventListener('change', function (e) { KW.feedback.setSound(e.target.checked); if (e.target.checked) { KW.feedback.unlock(); } });
+  $('optVibrate').addEventListener('change', function (e) { KW.feedback.setVibrate(e.target.checked); });
 
-  function applyData(data) {
-    DATA = data;
-    records = LookupCore.buildRecords(DATA);
-    updateMetaUI();
-    if (isMulti() && blocks.length) {
-      blocks = LookupCore.refreshBlocks(blocks, records, mode);
-      renderAccumulate();
-    } else if (String(qEl.value || '').trim()) {
-      render();
-    } else {
-      summaryEl.innerHTML = '';
-      resultEl.innerHTML = emptyHtml();
-    }
-  }
-
-  function fetchData() {
-    return fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) throw new Error('data.json ' + res.status);
-      return res.json();
-    }).then(function (data) {
-      if (!LookupCore.isValidData(data)) throw new Error('data.json 格式无效');
-      return data;
-    });
-  }
-
-  function readFallback() {
-    var el = document.getElementById('payload');
-    var raw = el && el.textContent;
-    if (!raw || !raw.trim() || raw.trim() === 'null') return null;
-    try {
-      var data = JSON.parse(raw);
-      return LookupCore.isValidData(data) ? data : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function syncData(opts) {
-    opts = opts || {};
-    if (syncing) return Promise.resolve();
-    syncing = true;
-    if (syncBtn) {
-      syncBtn.disabled = true;
-      syncBtn.textContent = '同步中…';
-    }
-    if (!opts.silentIfSame) setSyncStatus('正在同步…', 'muted');
-    return fetchData().then(function (incoming) {
-      var cmp = DATA ? LookupCore.compareSnapshots(DATA.meta, incoming.meta) : 'newer';
-      if (cmp === 'newer') {
-        applyData(incoming);
-        setSyncStatus(LookupCore.syncStatusText('newer', incoming.meta), 'ok');
-      } else if (!opts.silentIfSame) {
-        setSyncStatus(LookupCore.syncStatusText(cmp, DATA ? DATA.meta : incoming.meta), 'muted');
-      } else {
-        setSyncStatus('', '');
-      }
-    }).catch(function (e) {
-      if (opts.silentIfSame && DATA) return;
-      setSyncStatus('同步失败：' + ((e && e.message) ? e.message : e), 'err');
-    }).then(function () {
-      syncing = false;
-      if (syncBtn) {
-        syncBtn.disabled = false;
-        syncBtn.textContent = '一键同步';
-      }
-    });
-  }
-
-  function startSyncTimer() {
-    if (syncTimer) clearInterval(syncTimer);
-    syncTimer = setInterval(function () { syncData({ silentIfSame: true }); }, SYNC_INTERVAL_MS);
-  }
-
-  function onPartialToggle() {
-    writePartialPref(isPartial());
-    if (isMulti()) {
-      renderAccumulate();
-      if (blocks.length) {
-        var el = resultEl && resultEl.querySelector('.acc-block');
-        if (el) scrollResultsIntoView(el);
-      }
-    } else {
-      render();
-      if (String(qEl.value || '').trim()) {
-        scrollResultsIntoView(summaryEl && summaryEl.firstChild ? summaryEl : resultEl);
-      }
-    }
-    focusQuery(false);
-  }
-
-  function onMultiToggle() {
-    writeMultiPref(isMulti());
-    if (isMulti()) {
-      blocks = [];
-      flashIndex = -1;
-      var q = String(qEl.value || '').trim();
-      if (q) {
-        var parts = LookupCore.search(records, mode, q);
-        var acc = LookupCore.accumulate(blocks, parts);
-        blocks = acc.blocks;
-      }
-      renderAccumulate();
-    } else {
-      blocks = [];
-      flashIndex = -1;
-      updateMultiBar();
-      render();
-    }
-    focusQuery(false);
-  }
-
-  function clearAccumulate() {
-    blocks = [];
-    flashIndex = -1;
-    qEl.value = '';
-    if (scanPanel) { scanPanel.hidden = true; scanPanel.innerHTML = ''; }
-    renderAccumulate();
-    focusQuery(false);
-  }
-
-  // ---------- 事件 ----------
-  modeBtns.auto.addEventListener('click', function () { setMode('auto'); });
-  modeBtns.sku.addEventListener('click', function () { setMode('sku'); });
-  modeBtns.loc.addEventListener('click', function () { setMode('loc'); });
-
-  qEl.addEventListener('input', function () {
-    if (isMulti()) {
-      clearBtn.hidden = !String(qEl.value || '').trim() && !blocks.length;
+  $('expandAll').addEventListener('click', function () { S.collapsed = VM.setAllCollapsed(S.blocks, false); renderBatch(); });
+  $('collapseAll').addEventListener('click', function () { S.collapsed = VM.setAllCollapsed(S.blocks, true); renderBatch(); });
+  var clearArmed = 0;
+  $('multiClear').addEventListener('click', function () {
+    var btn = $('multiClear');
+    if (VM.clearNeedsConfirm(S.blocks.length) && !clearArmed) {
+      btn.textContent = '确认清空 ' + S.blocks.length + ' 条？';
+      btn.classList.add('confirm');
+      clearArmed = setTimeout(function () { clearArmed = 0; btn.textContent = '清空'; btn.classList.remove('confirm'); }, 4000);
       return;
     }
-    render();
+    clearTimeout(clearArmed); clearArmed = 0;
+    btn.textContent = '清空'; btn.classList.remove('confirm');
+    S.blocks = []; S.collapsed = {}; S.current = null; S.lastCommit = null;
+    render(); focusQuery();
   });
-  qEl.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      commitQuery(qEl.value, false);
+  $('histClear').addEventListener('click', function () { S.history = []; saveHistory(); renderHistory(); });
+  $('history').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hist]');
+    if (b) commitQuery(b.getAttribute('data-hist'), 'history');
+  });
+
+  function onAction(e) {
+    var t = e.target.closest('[data-jump],[data-sort-view],[data-toggle],[data-act]');
+    if (!t) return;
+    if (t.hasAttribute('data-jump')) {
+      var val = t.getAttribute('data-val');
+      if (S.mode !== 'auto') setMode(t.getAttribute('data-jump'));
+      S.lastCommit = null;
+      commitQuery(val, 'jump');
+    } else if (t.hasAttribute('data-sort-view')) {
+      var v = t.getAttribute('data-sort-view'), k = VM.validSort(v, t.getAttribute('data-sort-key'));
+      S.sortKeys[v] = k;
+      store.set(SORT_KEY + v, k);
+      var y = window.scrollY;
+      render();
+      window.scrollTo(0, y); // 排序不跳动
+    } else if (t.hasAttribute('data-toggle')) {
+      S.collapsed = VM.toggleCollapsed(S.collapsed, t.getAttribute('data-toggle'));
+      renderBatch();
+    } else {
+      var act = t.getAttribute('data-act');
+      if (act === 'retryLoad') startLoad();
+      else if (act === 'sync') syncData(true);
+      else if (act === 'enablePartial') { partialEl.checked = true; S.allowPartial = true; store.setBool(PARTIAL_KEY, true); $('adv').open = true; rerunAll(); }
     }
-  });
-  clearBtn.addEventListener('click', function () {
-    qEl.value = '';
-    if (scanPanel) { scanPanel.hidden = true; scanPanel.innerHTML = ''; }
-    if (isMulti()) renderAccumulate();
-    else render();
-    focusQuery(false);
-  });
+  }
+  $('results').addEventListener('click', onAction);
+  $('freshBanner').addEventListener('click', onAction);
+
+  // 扫码枪：焦点不在输入框（例如刚点了按钮）时也能接收，回车即查
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      if (!overlay.hidden) { closeScanner(); return; }
-      if (document.activeElement === qEl) {
-        qEl.value = '';
-        if (isMulti()) renderAccumulate();
-        else render();
-      }
+      if (S.scanOpen) { closeScanner(); return; }
+      if (document.activeElement === qEl) { qEl.value = ''; clearBtn.hidden = true; }
+      return;
+    }
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+    var tg = e.target, tag = tg && tg.tagName;
+    if (tag === 'INPUT' && tg.type !== 'checkbox' && tg.type !== 'range') return;
+    if (tag === 'TEXTAREA' || tag === 'SELECT' || (tg && tg.isContentEditable)) return;
+    var r = VM.wedgeKey(S.wedge, e.key, nowMs(), 1000);
+    var had = S.wedge && S.wedge.buf;
+    S.wedge = r.state;
+    if (e.key === 'Enter') {
+      if (r.submit) { e.preventDefault(); commitQuery(r.submit, 'wedge'); }
+      return;
+    }
+    if (e.key.length === 1 && (e.key !== ' ' || had)) {
+      e.preventDefault();
+      if (!S.scanOpen) { qEl.value = S.wedge.buf; clearBtn.hidden = !qEl.value; }
     }
   });
 
-  resultEl.addEventListener('click', onJump);
-  summaryEl.addEventListener('click', onJump);
-  function onJump(e) {
-    var btn = e.target.closest('[data-jump]');
-    if (!btn) return;
-    var val = btn.getAttribute('data-val');
-    var jump = btn.getAttribute('data-jump');
-    if (mode === 'auto') applyQuery(val, false);
-    else applyQueryAndMode(jump, val);
-  }
-  function applyQueryAndMode(nextMode, val) {
-    setMode(nextMode, false);
-    applyQuery(val, false);
-  }
-
-  scanBtn.addEventListener('click', function () {
-    try { /* iOS 解锁音频需在用户点击时 */ } catch (e) {}
-    openScanner();
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && S.data && nowMs() - S.lastOkAt > 60 * 1000) syncData(false);
   });
-  if (continuousMain) continuousMain.addEventListener('change', function () { syncContinuous(continuousMain); });
-  if (continuousScan) continuousScan.addEventListener('change', function () { syncContinuous(continuousScan); });
-  if (multiEl) multiEl.addEventListener('change', onMultiToggle);
-  if (partialEl) partialEl.addEventListener('change', onPartialToggle);
-  if (multiClear) multiClear.addEventListener('click', clearAccumulate);
-  if (syncBtn) syncBtn.addEventListener('click', function () { syncData({ silentIfSame: false }); });
 
-  function boot(data, note) {
-    applyData(data);
+  /* ---------------- 启动 ---------------- */
+  function boot() {
+    S.allowPartial = store.bool(PARTIAL_KEY, false);
+    S.batch = store.bool(MULTI_KEY, false);
+    partialEl.checked = S.allowPartial;
+    multiEl.checked = S.batch;
+    contMain.checked = contScan.checked = store.bool(CONT_KEY, false);
+    $('optSound').checked = KW.feedback.soundOn();
+    $('optVibrate').checked = KW.feedback.vibrateOn();
+    S.sortKeys.sku = VM.validSort('sku', store.get(SORT_KEY + 'sku', 'avail'));
+    S.sortKeys.loc = VM.validSort('loc', store.get(SORT_KEY + 'loc', 'avail'));
+    var m = store.get(MODE_KEY, 'auto');
+    setMode(modeBtns[m] ? m : 'auto');
+    if (m !== 'auto' || S.allowPartial) $('adv').open = true; // 非默认设置时展开，避免「看不见的设置」
+    loadHistory(); renderHistory();
     updateHttpsWarn();
-    setMode('auto', false);
-    if (multiEl) {
-      multiEl.checked = readMultiPref();
-      updateMultiBar();
-    }
-    if (partialEl) partialEl.checked = readPartialPref();
-    if (isMulti()) renderAccumulate();
-    else render();
-    focusQuery(false);
-    if (note) setSyncStatus(note, 'muted');
-    startSyncTimer();
+    focusQuery();
+    startLoad();
+    setInterval(function () { syncData(false); }, SYNC_INTERVAL_MS);
+    setInterval(updateStatusUI, 60 * 1000);
   }
 
-  function showLoadError(err) {
-    updateHttpsWarn();
-    if (dataTimeEl) dataTimeEl.innerHTML = '数据更新时间：<b>—</b>';
-    resultEl.innerHTML = '<div class="empty">无法加载库存数据。请确认本目录下有 data.json，并用 https 打开本页。' +
-      '<br><button type="button" id="retryLoad" class="retry-btn">重新加载</button>' +
-      '<br><small>' + esc(err && err.message ? err.message : err) + '</small></div>';
-    var btn = document.getElementById('retryLoad');
-    if (btn) btn.addEventListener('click', function () { startLoad(); });
-  }
-
-  function startLoad() {
-    if (resultEl && !DATA) resultEl.innerHTML = '<div class="empty">正在加载库存数据…</div>';
-    fetchData().then(function (data) {
-      boot(data);
-    }).catch(function (e) {
-      var fb = readFallback();
-      if (fb) {
-        boot(fb, '未能获取最新上传，已使用页面内备份数据。');
-        return;
-      }
-      showLoadError(e);
-    });
-  }
-
-  startLoad();
+  // 供端到端测试读取状态（只读）
+  KW.debug = { state: function () { return S; }, commit: commitQuery, sync: syncData, scrollResultsIntoView: scrollResultsIntoView };
+  boot();
 })();
 </script>
 </body>
