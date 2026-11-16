@@ -27,18 +27,26 @@ html, body {
 }
 body.scanning { overflow: hidden; }
 header {
-  position: sticky; top: 0; z-index: 10;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 0 rgba(28,25,21,.04);
 }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 14px 16px; }
-h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px; letter-spacing: .02em; }
+.head-line { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap; }
+h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: .02em; }
 .note { color: var(--muted); font-size: 13px; margin: 0; }
 .note strong { color: var(--ink); font-weight: 600; }
-.stats { display: flex; gap: 14px; flex-wrap: wrap; margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+.stats { display: flex; gap: 10px 14px; flex-wrap: wrap; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .controls { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; margin-top: 12px; }
+.help-box { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+.help-box summary {
+  cursor: pointer; font-size: 13px; font-weight: 650; color: var(--ink);
+  list-style: none; display: inline-block; user-select: none;
+}
+.help-box summary::-webkit-details-marker { display: none; }
+.help-box summary::before { content: "▸ "; }
+.help-box[open] summary::before { content: "▾ "; }
+.help-box .data-sub, .help-box .sync-help, .help-box .hint-row { margin: 6px 0 0; }
 .modes { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 3px; flex-wrap: wrap; }
 .modes button {
   border: 0; background: transparent; color: var(--muted);
@@ -128,14 +136,23 @@ tbody tr:last-child td { border-bottom: 0; }
 .card-nums b { color: var(--ink); font-variant-numeric: tabular-nums; font-size: 16px; }
 
 @media (max-width: 720px) {
-  .wrap { padding: 12px 12px; }
-  h1 { font-size: 22px; }
-  .controls { flex-direction: column; }
+  .wrap { padding: 8px 12px; }
+  header .wrap { padding: 8px 12px 10px; }
+  h1 { font-size: 17px; }
+  .data-time { font-size: 12px; font-weight: 650; margin: 0; }
+  .stats { margin: 4px 0 0; font-size: 12px; gap: 4px 10px; }
+  .stats b { font-size: 13px; }
+  .sync-row { margin: 6px 0 0; }
+  #syncBtn { height: 36px; font-size: 13px; }
+  .help-box { margin: 6px 0 0; }
+  .controls { flex-direction: column; margin-top: 8px; gap: 8px; }
   .modes { width: 100%; }
-  .modes button { flex: 1; }
+  .modes button { flex: 1; padding: 8px 10px; min-height: 40px; }
+  .search input { height: 44px; }
   .scan-actions { width: 100%; }
-  #scanBtn { flex: 1; height: 52px; font-size: 18px; }
-  .cont-lab { flex: 1; justify-content: center; height: 52px; }
+  #scanBtn { flex: 1 1 calc(50% - 8px); height: 44px; font-size: 16px; min-width: 0; }
+  .cont-lab { flex: 1 1 calc(50% - 8px); justify-content: center; min-height: 44px; height: auto; font-size: 13px; padding: 8px 8px; white-space: nowrap; }
+  main.wrap { padding-top: 10px; padding-bottom: 40px; }
   .cards { display: flex; }
   .table-wrap { display: none; }
   th.col-hide, td.col-hide { display: none; }
@@ -217,8 +234,8 @@ tbody tr:last-child td { border-bottom: 0; }
 #scanOverlay #bot button[hidden] { display: none; }
 
 
-.data-time { font-size: 17px; font-weight: 700; margin: 8px 0 2px; color: var(--ink); letter-spacing: .01em; }
-.data-time b { font-variant-numeric: tabular-nums; }
+.data-time { font-size: 14px; font-weight: 650; margin: 0; color: var(--muted); letter-spacing: .01em; }
+.data-time b { font-variant-numeric: tabular-nums; color: var(--ink); }
 .data-sub { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
 .data-sub strong { color: var(--ink); font-weight: 600; }
 .sync-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 2px; }
@@ -266,8 +283,7 @@ tbody tr:last-child td { border-bottom: 0; }
   border-radius: 10px; cursor: pointer;
 }
 @media (max-width: 720px) {
-  .data-time { font-size: 18px; }
-  #syncBtn { height: 44px; }
+  .data-time { font-size: 12px; }
 }
 
 </style>
@@ -275,15 +291,21 @@ tbody tr:last-child td { border-bottom: 0; }
 <body>
 <header>
   <div class="wrap">
-    <h1>fest7 库位查询</h1>
-    <p class="data-time" id="dataTime">数据更新时间：<b>—</b></p>
-    <p class="data-sub" id="dataMeta">正在加载库存数据…</p>
+    <div class="head-line">
+      <h1>fest7 库位查询</h1>
+      <p class="data-time" id="dataTime">数据更新时间：<b>—</b></p>
+    </div>
+    <div class="stats" id="stats"></div>
     <div class="sync-row">
       <button type="button" id="syncBtn">一键同步</button>
       <span id="syncStatus"></span>
     </div>
-    <p class="sync-help">一键同步会拉取服务器上最近一次整点上传的库位数据，不会触发领星 WMS 导出。页面打开期间每 10 分钟自动检查一次。</p>
-    <div class="stats" id="stats"></div>
+    <details class="help-box" id="helpBox">
+      <summary>说明</summary>
+      <p class="data-sub" id="dataMeta">正在加载库存数据…</p>
+      <p class="sync-help">一键同步会拉取服务器上最近一次整点上传的库位数据，不会触发领星 WMS 导出。页面打开期间每 10 分钟自动检查一次。</p>
+      <p class="hint-row">手机请用系统浏览器（Chrome / Safari）打开；微信或企业微信内置浏览器的摄像头权限可能不稳定。扫码需要 https。扫码枪对准输入框扫描后回车即可。勾选「多SKU连续查询」后，每次扫码或回车会把结果追加在下方。默认只显示精确匹配；勾选「部分匹配」可查看包含关键词的相近结果。</p>
+    </details>
     <div class="controls">
       <div class="modes" role="tablist" aria-label="查询方式">
         <button type="button" id="mode-auto" aria-pressed="true">自动识别</button>
@@ -296,6 +318,7 @@ tbody tr:last-child td { border-bottom: 0; }
       </div>
       <div class="scan-actions">
         <label class="cont-lab"><input type="checkbox" id="multiSku"> 多SKU连续查询</label>
+        <label class="cont-lab"><input type="checkbox" id="partialMatch"> 部分匹配</label>
         <button type="button" id="scanBtn">📷 扫码</button>
         <label class="cont-lab"><input type="checkbox" id="continuous"> <span id="contLabel">连续扫描</span></label>
       </div>
@@ -305,10 +328,10 @@ tbody tr:last-child td { border-bottom: 0; }
       <button type="button" id="multiClear">清空</button>
     </div>
     <div id="httpsWarn" hidden></div>
-    <p class="hint-row">手机请用系统浏览器（Chrome / Safari）打开；微信或企业微信内置浏览器的摄像头权限可能不稳定。扫码需要 https。扫码枪对准输入框扫描后回车即可。勾选「多SKU连续查询」后，每次扫码或回车会把结果追加在下方。</p>
   </div>
 </header>
 <main class="wrap">
+  <div id="resultsStart"></div>
   <div id="summary"></div>
   <div id="result"></div>
 </main>
@@ -454,8 +477,26 @@ tbody tr:last-child td { border-bottom: 0; }
     return (parts.exact || []).concat(parts.partial || []);
   }
 
-  function resultTotals(parts) {
-    var list = resultRows(parts);
+  function displayRows(parts, allowPartial) {
+    if (!parts) return [];
+    if (allowPartial === false) return (parts.exact || []).slice();
+    return resultRows(parts);
+  }
+
+  function partialHitCount(parts) {
+    if (!parts) return 0;
+    if (parts.resolvedMode === 'both') return resultRows(parts).length;
+    return (parts.partial || []).length;
+  }
+
+  function noExactHint(n) {
+    var c = Number(n) || 0;
+    if (c <= 0) return '';
+    return '可勾选「部分匹配」查看 ' + c.toLocaleString('zh-CN') + ' 条相近结果';
+  }
+
+  function resultTotals(parts, allowPartial) {
+    var list = displayRows(parts, allowPartial);
     var t = 0, a = 0, l = 0;
     for (var i = 0; i < list.length; i++) {
       t += list[i].total;
@@ -556,6 +597,9 @@ tbody tr:last-child td { border-bottom: 0; }
     buildRecords: buildRecords,
     normalize: normalize,
     resultRows: resultRows,
+    displayRows: displayRows,
+    partialHitCount: partialHitCount,
+    noExactHint: noExactHint,
     resultTotals: resultTotals,
     accumulate: accumulate,
     refreshBlocks: refreshBlocks,
@@ -929,6 +973,7 @@ function scannerMain() {
   });
   startCam('');
 }
+
 </script>
 <script>
 /* fest7 库位查询页面逻辑 */
@@ -968,6 +1013,7 @@ function scannerMain() {
   };
 
   var MULTI_KEY = 'kuwei_multi_sku';
+  var PARTIAL_KEY = 'kuwei_partial_match';
   var SYNC_INTERVAL_MS = 10 * 60 * 1000;
 
   var DATA = null;
@@ -995,6 +1041,7 @@ function scannerMain() {
   var syncBtn = document.getElementById('syncBtn');
   var syncStatus = document.getElementById('syncStatus');
   var multiEl = document.getElementById('multiSku');
+  var partialEl = document.getElementById('partialMatch');
   var multiBar = document.getElementById('multiBar');
   var multiCount = document.getElementById('multiCount');
   var multiClear = document.getElementById('multiClear');
@@ -1021,11 +1068,36 @@ function scannerMain() {
     return !!(multiEl && multiEl.checked);
   }
 
+  function isPartial() {
+    return !!(partialEl && partialEl.checked);
+  }
+
   function readMultiPref() {
     try { return localStorage.getItem(MULTI_KEY) === '1'; } catch (e) { return false; }
   }
   function writeMultiPref(on) {
     try { localStorage.setItem(MULTI_KEY, on ? '1' : '0'); } catch (e) {}
+  }
+  function readPartialPref() {
+    try { return localStorage.getItem(PARTIAL_KEY) === '1'; } catch (e) { return false; }
+  }
+  function writePartialPref(on) {
+    try { localStorage.setItem(PARTIAL_KEY, on ? '1' : '0'); } catch (e) {}
+  }
+
+  function scrollResultsIntoView(target) {
+    var el = target;
+    if (!el) {
+      if (isMulti()) el = resultEl && resultEl.querySelector('.acc-block:last-child');
+      else el = (summaryEl && summaryEl.firstChild) ? summaryEl : resultEl;
+    }
+    if (!el || !el.scrollIntoView) return;
+    function go() {
+      try { el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+      catch (e) { try { el.scrollIntoView(); } catch (e2) {} }
+    }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(function () { requestAnimationFrame(go); });
+    else setTimeout(go, 0);
   }
 
   function setMode(next, rerender) {
@@ -1175,13 +1247,27 @@ function scannerMain() {
     if (isMulti()) {
       return '<div class="empty">已打开「多SKU连续查询」。每次扫码或回车会在下方追加一条结果，不会覆盖上一条。再扫下一个 SKU，它的库位会显示在上一条下面。</div>';
     }
-    return '<div class="empty">扫描或输入关键词开始查询。默认「自动识别」：完整库位号会只显示该库位上的 SKU（例如 BB-1-4-2 不会和 BBB-1-4-2 混在一起）；完整 SKU 或条码会只显示该 SKU 的库位。也可以手动选择「搜 SKU」或「搜库位」。扫码枪扫完回车即查，结果会自动全选方便再扫。</div>';
+    return '<div class="empty">扫描或输入关键词开始查询。默认只显示精确匹配的 SKU 或库位；勾选「部分匹配」后才会显示包含关键词的相近结果。默认「自动识别」：完整库位号会只显示该库位上的 SKU（例如 BB-1-4-2 不会和 BBB-1-4-2 混在一起）；完整 SKU 或条码会只显示该 SKU 的库位。也可以手动选择「搜 SKU」或「搜库位」。扫码枪扫完回车即查，结果会自动全选方便再扫。</div>';
+  }
+
+  function noExactBody(parts) {
+    var n = LookupCore.partialHitCount(parts);
+    var hint = n ? '<p class="hint">' + esc(LookupCore.noExactHint(n)) + '</p>' : '';
+    return {
+      head: '',
+      body: '<div class="empty">无精确匹配<span class="query-echo">' + esc(parts.query) + '</span></div>' + hint
+    };
   }
 
   function renderResultBody(parts) {
+    var allowPartial = isPartial();
+    if (!allowPartial && !(parts.exact && parts.exact.length)) {
+      return noExactBody(parts);
+    }
     if (parts.resolvedMode !== 'both') {
-      var all = parts.exact.concat(parts.partial);
-      if (!all.length) {
+      var exact = parts.exact || [];
+      var partial = allowPartial ? (parts.partial || []) : [];
+      if (!exact.length && !partial.length) {
         return {
           head: '',
           body: '<div class="empty">没有找到匹配的记录。<span class="query-echo">' + esc(parts.query) + '</span></div>'
@@ -1189,12 +1275,12 @@ function scannerMain() {
       }
       var view = parts.resolvedMode;
       var head = '';
-      if (parts.exact.length && parts.partial.length) {
-        head = chips(sums(parts.exact), '精确匹配') + chips(sums(parts.partial), '其他部分匹配') +
-          (view === 'sku' ? perSkuTable(parts.exact) : '');
+      if (exact.length && partial.length) {
+        head = chips(sums(exact), '精确匹配') + chips(sums(partial), '其他部分匹配') +
+          (view === 'sku' ? perSkuTable(exact) : '');
       } else {
-        var label = parts.exact.length ? '精确匹配' : '部分匹配';
-        var list = parts.exact.length ? parts.exact : parts.partial;
+        var label = exact.length ? '精确匹配' : '部分匹配';
+        var list = exact.length ? exact : partial;
         head = chips(sums(list), label) + (view === 'sku' ? perSkuTable(list) : '');
       }
       if (mode === 'auto') {
@@ -1202,8 +1288,8 @@ function scannerMain() {
           ' · ' + esc(parts.query) + '</div>' + head;
       }
       var body = '';
-      if (parts.exact.length) body += '<h2>精确匹配（' + fmt(parts.exact.length) + '）</h2>' + renderList(parts.exact, view);
-      if (parts.partial.length) body += '<h2>部分匹配（' + fmt(parts.partial.length) + '）</h2>' + renderList(parts.partial, view);
+      if (exact.length) body += '<h2>精确匹配（' + fmt(exact.length) + '）</h2>' + renderList(exact, view);
+      if (partial.length) body += '<h2>部分匹配（' + fmt(partial.length) + '）</h2>' + renderList(partial, view);
       return { head: head, body: body };
     }
 
@@ -1252,7 +1338,7 @@ function scannerMain() {
   }
 
   function blockHeader(entry) {
-    var totals = LookupCore.resultTotals(entry.parts);
+    var totals = LookupCore.resultTotals(entry.parts, isPartial());
     var viewHint = '';
     if (entry.parts.resolvedMode === 'loc') viewHint = '库位';
     else if (entry.parts.resolvedMode === 'sku') viewHint = 'SKU / 条码';
@@ -1284,9 +1370,7 @@ function scannerMain() {
     flashIndex = -1;
     if (actionInfo && (actionInfo.action === 'flash' || actionInfo.action === 'append') && actionInfo.index >= 0) {
       var el = resultEl.querySelector('.acc-block[data-index="' + actionInfo.index + '"]');
-      if (el && el.scrollIntoView) {
-        try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(); }
-      }
+      if (el) scrollResultsIntoView(el);
     }
   }
 
@@ -1308,6 +1392,9 @@ function scannerMain() {
     }
     if (fromScan) compactPanel(parts);
     focusQuery(true);
+    if (!isMulti() && String(query || '').trim()) {
+      scrollResultsIntoView(summaryEl && summaryEl.firstChild ? summaryEl : resultEl);
+    }
     return parts;
   }
 
@@ -1315,11 +1402,19 @@ function scannerMain() {
     if (!scanPanel) return;
     var q = parts && parts.query;
     if (!q) { scanPanel.hidden = true; scanPanel.innerHTML = ''; return; }
+    var allowPartial = isPartial();
     var list, view, title;
     if (parts.resolvedMode === 'loc' && parts.exact.length) {
       list = parts.exact; view = 'loc'; title = '库位 ' + q;
     } else if (parts.resolvedMode === 'sku' && parts.exact.length) {
       list = parts.exact; view = 'sku'; title = 'SKU / 条码 ' + q;
+    } else if (!allowPartial) {
+      var pn = LookupCore.partialHitCount(parts);
+      var hint = pn ? LookupCore.noExactHint(pn) : '';
+      scanPanel.hidden = false;
+      scanPanel.innerHTML = '<div class="sp-miss">无精确匹配 <b>' + esc(q) + '</b></div>' +
+        (hint ? '<div class="sp-more">' + esc(hint) + '</div>' : '');
+      return;
     } else if (parts.resolvedMode === 'both') {
       var n = parts.partialLoc.length + parts.partialSku.length;
       if (!n) {
@@ -1427,6 +1522,7 @@ function scannerMain() {
     var stats = document.getElementById('stats');
     if (stats && meta) {
       stats.innerHTML =
+        '<span>记录 <b>' + fmt(meta.rowCount) + '</b></span>' +
         '<span>SKU <b>' + fmt(meta.uniqueSkus) + '</b></span>' +
         '<span>库位 <b>' + fmt(meta.uniqueLocations) + '</b></span>' +
         '<span>客户 <b>' + fmt(meta.uniqueCustomers) + '</b></span>' +
@@ -1512,6 +1608,23 @@ function scannerMain() {
   function startSyncTimer() {
     if (syncTimer) clearInterval(syncTimer);
     syncTimer = setInterval(function () { syncData({ silentIfSame: true }); }, SYNC_INTERVAL_MS);
+  }
+
+  function onPartialToggle() {
+    writePartialPref(isPartial());
+    if (isMulti()) {
+      renderAccumulate();
+      if (blocks.length) {
+        var el = resultEl && resultEl.querySelector('.acc-block');
+        if (el) scrollResultsIntoView(el);
+      }
+    } else {
+      render();
+      if (String(qEl.value || '').trim()) {
+        scrollResultsIntoView(summaryEl && summaryEl.firstChild ? summaryEl : resultEl);
+      }
+    }
+    focusQuery(false);
   }
 
   function onMultiToggle() {
@@ -1602,6 +1715,7 @@ function scannerMain() {
   if (continuousMain) continuousMain.addEventListener('change', function () { syncContinuous(continuousMain); });
   if (continuousScan) continuousScan.addEventListener('change', function () { syncContinuous(continuousScan); });
   if (multiEl) multiEl.addEventListener('change', onMultiToggle);
+  if (partialEl) partialEl.addEventListener('change', onPartialToggle);
   if (multiClear) multiClear.addEventListener('click', clearAccumulate);
   if (syncBtn) syncBtn.addEventListener('click', function () { syncData({ silentIfSame: false }); });
 
@@ -1613,6 +1727,7 @@ function scannerMain() {
       multiEl.checked = readMultiPref();
       updateMultiBar();
     }
+    if (partialEl) partialEl.checked = readPartialPref();
     if (isMulti()) renderAccumulate();
     else render();
     focusQuery(false);
